@@ -38,14 +38,6 @@ export const resetToAuthenticationRoute: NavigationResetAction = StackActions.re
   }
 );
 
-export const navigateToMainNavigatorAction = (
-  prevRouteKey: string | undefined
-) =>
-  StackActions.replace({
-    routeName: ROUTES.MAIN,
-    key: prevRouteKey
-  });
-
 export const navigateToOnboardingPinScreenAction = NavigationActions.navigate({
   routeName: ROUTES.ONBOARDING,
   action: NavigationActions.navigate({ routeName: ROUTES.ONBOARDING_PIN })

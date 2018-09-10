@@ -1,11 +1,15 @@
 import { isNone } from "fp-ts/lib/Option";
+import {
+  NavigationActions,
+  NavigationRoute,
+  StackActions
+} from "react-navigation";
 import { Effect } from "redux-saga";
 import { call, fork, put, race, select, takeLatest } from "redux-saga/effects";
 
 import { startApplicationInitialization } from "../store/actions/application";
 import { START_APPLICATION_INITIALIZATION } from "../store/actions/constants";
 import { navigateToDeepLink } from "../store/actions/deepLink";
-import { navigateToMainNavigatorAction } from "../store/actions/navigation";
 import { resetProfileState } from "../store/actions/profile";
 import {
   sessionInfoSelector,
@@ -30,8 +34,8 @@ import { updateInstallationSaga } from "./notifications";
 
 import { loadProfile, watchProfileUpsertRequestsSaga } from "./profile";
 
-import { NavigationRoute } from "react-navigation";
 import { PagoPaClient } from "../api/pagopa";
+import ROUTES from "../navigation/routes";
 import { currentRouteSelector } from "../store/reducers/navigation";
 import { authenticationSaga } from "./startup/authenticationSaga";
 import { checkAcceptedTosSaga } from "./startup/checkAcceptedTosSaga";
@@ -198,7 +202,17 @@ function* initializeApplicationSaga(): IterableIterator<Effect> {
     yield put(navigateToDeepLink(deepLink, currentRoute.key));
   } else {
     // ... otherwise to the MainNavigator
-    yield put(navigateToMainNavigatorAction(currentRoute.key));
+    const navigationAction =
+      // If the current screen is the pin login screen, replace the route,
+      // otherwise just navigate.
+      currentRoute.routeName === ROUTES.PIN_LOGIN_NAVIGATOR
+        ? StackActions.replace({
+            routeName: ROUTES.MAIN,
+            key: currentRoute.key
+          })
+        : NavigationActions.navigate({ routeName: ROUTES.MAIN });
+
+    yield put(navigationAction);
   }
 }
 
