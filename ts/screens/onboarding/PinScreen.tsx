@@ -10,7 +10,7 @@ import {
   View
 } from "native-base";
 import * as React from "react";
-import CodeInput from "react-native-confirmation-code-input";
+import CodeInput from "react-native-confirmation-code-field";
 import { NavigationScreenProp, NavigationState } from "react-navigation";
 import { connect } from "react-redux";
 import GoBackButton from "../../components/GoBackButton";
@@ -87,7 +87,7 @@ class PinScreen extends React.Component<Props, State> {
   }
 
   // Method called when the confirmation CodeInput is filled
-  public onPinConfirmFulfill(isValid: boolean, code: PinString) {
+  public onPinConfirmFulfill(code: PinString, isValid: boolean) {
     // If the inserted PIN do not match we clear the component to let the user retry
     if (!isValid) {
       if (this.pinConfirmComponent) {
@@ -160,7 +160,7 @@ class PinScreen extends React.Component<Props, State> {
           autofocus={true}
           inactiveColor={variables.brandLightGray}
           activeColor={variables.brandDarkGray}
-          onFulfill={(code: PinString) => this.onPinFulfill(code)}
+          onFulfill={this.onPinFulfill}
         />
       );
     } else {
@@ -174,9 +174,7 @@ class PinScreen extends React.Component<Props, State> {
             inactiveColor={variables.brandLightGray}
             activeColor={variables.brandDarkGray}
             compareWithCode={pinState.pin}
-            onFulfill={(isValid, code) =>
-              this.onPinConfirmFulfill(isValid, code)
-            }
+            onFulfill={this.onPinConfirmFulfill}
             codeInputRef={pinpad => (this.pinConfirmComponent = pinpad)} // tslint:disable-line no-object-mutation
           />
 

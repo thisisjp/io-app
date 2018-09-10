@@ -6,7 +6,7 @@ import { Button, Content, Text, View } from "native-base";
 
 import { connect } from "react-redux";
 
-import CodeInput from "react-native-confirmation-code-input";
+import CodeInput from "react-native-confirmation-code-field";
 import { NavigationScreenProp, NavigationState } from "react-navigation";
 
 import I18n from "../i18n";
