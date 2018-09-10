@@ -199,7 +199,7 @@ function* initializeApplicationSaga(): IterableIterator<Effect> {
     yield put(navigateToDeepLink(deepLink, currentRoute.key));
   } else {
     // ... otherwise to the MainNavigator
-    yield put(navigateToMainNavigatorAction(currentRoute.key));
+    yield put(navigateToMainNavigatorAction());
   }
 }
 

@@ -6,7 +6,7 @@ import {
 } from "../../../store/actions/analytics";
 import { loginSuccess } from "../../../store/actions/authentication";
 import { LOGIN_SUCCESS } from "../../../store/actions/constants";
-import { resetToAuthenticationRoute } from "../../../store/actions/navigation";
+import { navigateToAuthenticationRoute } from "../../../store/actions/navigation";
 
 import { SessionToken } from "../../../types/SessionToken";
 
@@ -20,7 +20,7 @@ describe("authenticationSaga", () => {
       .next()
       .put(analyticsAuthenticationStarted)
       .next()
-      .put(resetToAuthenticationRoute)
+      .put(navigateToAuthenticationRoute())
       .next()
       .take(LOGIN_SUCCESS)
       .next(loginSuccess(aSessionToken))

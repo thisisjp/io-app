@@ -1,17 +1,21 @@
-import { NavigationActions } from "react-navigation";
 import { Effect } from "redux-saga";
-import { call, put, takeEvery } from "redux-saga/effects";
+import { call, put, select, takeEvery } from "redux-saga/effects";
 
 import { backgroundActivityTimeout } from "../../config";
 
 import { startApplicationInitialization } from "../../store/actions/application";
 import { APP_STATE_CHANGE_ACTION } from "../../store/actions/constants";
-import { navigateToBackgroundScreen } from "../../store/actions/navigation";
+import {
+  navigateToBackgroundScreen,
+  navigateToMainNavigatorAction
+} from "../../store/actions/navigation";
 import {
   ApplicationState,
   ApplicationStateAction
 } from "../../store/actions/types";
 
+import { navigateToDeepLink } from "../../store/actions/deepLink";
+import { deepLinkSelector } from "../../store/reducers/deepLink";
 import { saveNavigationStateSaga } from "../startup/saveNavigationStateSaga";
 
 /**
@@ -57,9 +61,19 @@ export function* watchApplicationActivitySaga(): IterableIterator<Effect> {
         // re-initialize the app from scratch
         yield put(startApplicationInitialization);
       } else {
+        const deepLink: ReturnType<typeof deepLinkSelector> = yield select(
+          deepLinkSelector
+        );
         // Or else, just navigate back to the screen we were at before
         // going into background
-        yield put(NavigationActions.back());
+
+        if (deepLink) {
+          // If a deep link has been set, navigate to deep link...
+          yield put(navigateToDeepLink(deepLink));
+        } else {
+          // ... otherwise to the MainNavigator
+          yield put(navigateToMainNavigatorAction());
+        }
       }
     }
 

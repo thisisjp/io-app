@@ -7,7 +7,7 @@ import {
 } from "../../store/actions/analytics";
 import { LoginSuccess } from "../../store/actions/authentication";
 import { LOGIN_SUCCESS } from "../../store/actions/constants";
-import { resetToAuthenticationRoute } from "../../store/actions/navigation";
+import { navigateToAuthenticationRoute } from "../../store/actions/navigation";
 
 import { SessionToken } from "../../types/SessionToken";
 
@@ -19,7 +19,7 @@ export function* authenticationSaga(): IterableIterator<Effect | SessionToken> {
   yield put(analyticsAuthenticationStarted);
 
   // Reset the navigation stack and navigate to the authentication screen
-  yield put(resetToAuthenticationRoute);
+  yield put(navigateToAuthenticationRoute());
 
   // Wait until the user has successfully logged in with SPID
   // FIXME: show an error on LOGIN_FAILED?

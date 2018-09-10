@@ -1,9 +1,7 @@
 import {
   NavigationAction,
   NavigationActions,
-  NavigationResetAction,
-  NavigationState,
-  StackActions
+  NavigationState
 } from "react-navigation";
 
 import { NAVIGATION_RESTORE } from "./constants";
@@ -26,24 +24,14 @@ export const navigationRestore = (navigationState: NavigationState) => ({
   payload: navigationState
 });
 
-export const resetToAuthenticationRoute: NavigationResetAction = StackActions.reset(
-  {
-    index: 0,
-    key: null,
-    actions: [
-      NavigationActions.navigate({
-        routeName: ROUTES.AUTHENTICATION
-      })
-    ]
-  }
-);
+export const navigateToAuthenticationRoute = () =>
+  NavigationActions.navigate({
+    routeName: ROUTES.AUTHENTICATION
+  });
 
-export const navigateToMainNavigatorAction = (
-  prevRouteKey: string | undefined
-) =>
-  StackActions.replace({
-    routeName: ROUTES.MAIN,
-    key: prevRouteKey
+export const navigateToMainNavigatorAction = () =>
+  NavigationActions.navigate({
+    routeName: ROUTES.MAIN
   });
 
 export const navigateToOnboardingPinScreenAction = NavigationActions.navigate({
