@@ -181,7 +181,7 @@ function* initializeApplicationSaga(): IterableIterator<Effect> {
   // Watch for requests to reset the PIN
   yield fork(watchPinResetSaga);
 
-  yield fork(startupNavigationSaga);
+  yield call(startupNavigationSaga);
 }
 
 export function* startupSaga(): IterableIterator<Effect> {
