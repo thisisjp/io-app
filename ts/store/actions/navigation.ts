@@ -64,3 +64,23 @@ export const navigateToPinLogin = NavigationActions.navigate({
 export const navigateToBackgroundScreen = NavigationActions.navigate({
   routeName: ROUTES.BACKGROUND
 });
+
+export const navigateToMessageDetailsScreenAction = (messageId: string) =>
+  StackActions.reset({
+    key: "StackRouterRoot",
+    index: 0,
+    actions: [
+      NavigationActions.navigate({
+        routeName: ROUTES.MAIN,
+        action: NavigationActions.navigate({
+          routeName: ROUTES.MESSAGES_HOME,
+          action: NavigationActions.navigate({
+            routeName: ROUTES.MESSAGE_DETAILS,
+            params: {
+              messageId
+            }
+          })
+        })
+      })
+    ]
+  });
