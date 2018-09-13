@@ -65,6 +65,7 @@ export type MessagesActions =
   | MessagesLoadCancel
   | MessagesLoadSuccess
   | MessagesLoadFailure
+  | MessageLoadRequest
   | MessageLoadSuccess
   | StartPayment;
 
