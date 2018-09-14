@@ -21,6 +21,7 @@ export const INITIAL_STATE: ErrorState = {
   PROFILE_LOAD: none,
   PROFILE_UPSERT: none,
   MESSAGES_LOAD: none,
+  MESSAGE_LOAD: none,
   LOGOUT: none
 };
 
