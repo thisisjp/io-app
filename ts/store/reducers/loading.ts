@@ -20,6 +20,7 @@ export const INITIAL_STATE: LoadingState = {
   PROFILE_UPSERT: false,
   MESSAGES_LOAD: false,
   MESSAGE_LOAD: false,
+  MESSAGE_AND_SERVICE_LOAD: false,
   LOGOUT: false
 };
 

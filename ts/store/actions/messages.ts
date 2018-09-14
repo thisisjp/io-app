@@ -1,10 +1,13 @@
 /**
  * Action types and action creator related to the Messages.
  */
-
 import { PaymentData } from "../../../definitions/backend/PaymentData";
+import { ServiceId } from "../../../definitions/backend/ServiceId";
 import { MessageWithContentPO } from "../../types/MessageWithContentPO";
 import {
+  MESSAGE_AND_SERVICE_LOAD_FAILURE,
+  MESSAGE_AND_SERVICE_LOAD_REQUEST,
+  MESSAGE_AND_SERVICE_LOAD_SUCCESS,
   MESSAGE_LOAD_FAILURE,
   MESSAGE_LOAD_REQUEST,
   MESSAGE_LOAD_SUCCESS,
@@ -50,6 +53,22 @@ export type MessageLoadFailure = Readonly<{
   error: true;
 }>;
 
+export type MessageAndServiceLoadRequest = Readonly<{
+  type: typeof MESSAGE_AND_SERVICE_LOAD_REQUEST;
+  // The messageId
+  payload: string;
+}>;
+
+export type MessageAndServiceLoadSuccess = Readonly<{
+  type: typeof MESSAGE_AND_SERVICE_LOAD_SUCCESS;
+}>;
+
+export type MessageAndServiceLoadFailure = Readonly<{
+  type: typeof MESSAGE_AND_SERVICE_LOAD_FAILURE;
+  payload: Error;
+  error: true;
+}>;
+
 export type NavigateToMessageDetails = Readonly<{
   type: typeof NAVIGATE_TO_MESSAGE_DETAILS;
   payload: string;
@@ -67,6 +86,9 @@ export type MessagesActions =
   | MessagesLoadFailure
   | MessageLoadRequest
   | MessageLoadSuccess
+  | MessageAndServiceLoadRequest
+  | MessageAndServiceLoadSuccess
+  | MessageAndServiceLoadFailure
   | StartPayment;
 
 // Creators
@@ -102,6 +124,25 @@ export const loadMessageSuccess = (
 
 export const loadMessageFailure = (error: Error): MessageLoadFailure => ({
   type: MESSAGE_LOAD_FAILURE,
+  payload: error,
+  error: true
+});
+
+export const loadMessageAndServiceAction = (
+  messageId: string
+): MessageAndServiceLoadRequest => ({
+  type: MESSAGE_AND_SERVICE_LOAD_REQUEST,
+  payload: messageId
+});
+
+export const loadMessageAndServiceSuccessAction = (): MessageAndServiceLoadSuccess => ({
+  type: MESSAGE_AND_SERVICE_LOAD_SUCCESS
+});
+
+export const loadMessageAndServiceFailureAction = (
+  error: Error
+): MessageAndServiceLoadFailure => ({
+  type: MESSAGE_AND_SERVICE_LOAD_FAILURE,
   payload: error,
   error: true
 });

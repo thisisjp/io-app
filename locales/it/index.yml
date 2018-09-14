@@ -394,14 +394,14 @@ messages:
   noContent: Contenuto non disponibile
 messageDetails:
   headerTitle: Messaggio
-  detailsLink:
+  rawInfoLink:
     showLabel: Dettagli del messaggio
     hideLabel: Chiudi dettagli
-  infoLabels:
-    data: 'Data:'
-    senderFrom: Inviato da
-    department: Dipartimento
-    service: Servizio
+  rawInfoLabels:
+    createdAt: Data
+    organizationName: Inviato da
+    departmentName: Dipartimento
+    serviceName: Servizio
 notifications:
   installation:
     errorTitle: Notifiche push

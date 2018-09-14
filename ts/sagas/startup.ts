@@ -39,6 +39,7 @@ import { watchLogoutSaga } from "./startup/watchLogoutSaga";
 import { watchPinResetSaga } from "./startup/watchPinResetSaga";
 import { watchSessionExpiredSaga } from "./startup/watchSessionExpiredSaga";
 import { watchWalletSaga } from "./wallet";
+import { watchLoadMessageAndServiceSaga } from "./startup/loadMessageAndServiceSaga";
 
 /**
  * Handles the application startup and the main application logic loop
@@ -164,6 +165,13 @@ function* initializeApplicationSaga(): IterableIterator<Effect> {
     backendClient.getMessage,
     backendClient.getService
   );
+
+  yield fork(
+    watchLoadMessageAndServiceSaga,
+    backendClient.getMessage,
+    backendClient.getService
+  );
+
   // Navigate to message details when requested
   yield fork(
     watchNavigateToMessageDetailsSaga,

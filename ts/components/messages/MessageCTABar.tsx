@@ -38,8 +38,7 @@ const styles = StyleSheet.create({
   mainContainer: {
     display: "flex",
     flex: 1,
-    flexDirection: "row",
-    marginTop: 16
+    flexDirection: "row"
   },
   dueDateContainer: {
     display: "flex",

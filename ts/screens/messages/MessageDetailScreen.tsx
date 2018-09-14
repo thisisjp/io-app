@@ -8,8 +8,12 @@ import { ServicePublic } from "../../../definitions/backend/ServicePublic";
 import MessageDetailComponent from "../../components/messages/MessageDetailComponent";
 import BaseScreenComponent from "../../components/screens/BaseScreenComponent";
 import I18n from "../../i18n";
+import ROUTES from "../../navigation/routes";
 import { FetchRequestActions } from "../../store/actions/constants";
-import { loadMessage } from "../../store/actions/messages";
+import {
+  loadMessage,
+  loadMessageAndServiceAction
+} from "../../store/actions/messages";
 import { ReduxProps } from "../../store/actions/types";
 import { messageByIdSelector } from "../../store/reducers/entities/messages/messagesById";
 import { serviceByIdSelector } from "../../store/reducers/entities/services/servicesById";
@@ -59,6 +63,15 @@ const styles = StyleSheet.create({
 export class MessageDetailScreen extends React.PureComponent<Props, never> {
   private goBack = () => this.props.navigation.goBack();
 
+  private onServiceLinkPressHandler = () => {
+    const service = this.props.service;
+    if (service) {
+      this.props.navigation.navigate(ROUTES.PREFERENCES_SERVICE_DETAIL, {
+        service
+      });
+    }
+  };
+
   /**
    * Used when something went wrong and there is no way to recover.
    * (ex. no messageId navigation parameter passed to the screen)
@@ -93,7 +106,9 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
         <Text>An error occurred while loading the message details.</Text>
         <Button
           primary={true}
-          onPress={() => this.props.dispatch(loadMessage(messageId))}
+          onPress={() =>
+            this.props.dispatch(loadMessageAndServiceAction(messageId))
+          }
         >
           <Text>Retry</Text>
         </Button>
@@ -104,68 +119,77 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
   /**
    * Used when we have all data to properly render the content of the screen.
    */
-  private renderFullContent = (
+  private renderFullState = (
     message: MessageWithContentPO,
     service?: ServicePublic
   ) => {
     return (
       <Content noPadded={true}>
-        <MessageDetailComponent message={message} service={service} />
+        <MessageDetailComponent
+          message={message}
+          service={service}
+          onServiceLinkPress={this.onServiceLinkPressHandler}
+        />
       </Content>
     );
+  };
+
+  private renderCurrentState = () => {
+    const { isLoading, hasError, messageId, message, service } = this.props;
+
+    if (!messageId) {
+      return this.renderInvalidState();
+    } else if (isLoading) {
+      return this.renderLoadingState();
+    } else if (hasError) {
+      return this.renderErrorState(messageId);
+    } else if (message) {
+      return this.renderFullState(message, service);
+    }
+
+    // Fallback to invalid state
+    return this.renderInvalidState();
   };
 
   public componentDidMount() {
     const { messageId, message } = this.props;
 
     /**
-     * If we haven't already the message in the store (ex. coming from a push notification or deep link)
+     * If the message in not in the store (ex. coming from a push notification or deep link)
      * try to load it.
      */
     if (messageId && !message) {
-      this.props.dispatch(loadMessage(messageId));
+      this.props.dispatch(loadMessageAndServiceAction(messageId));
     }
   }
 
   public render() {
-    const { isLoading, hasError, messageId, message, service } = this.props;
-
     return (
       <BaseScreenComponent
         headerTitle={I18n.t("messageDetails.headerTitle")}
         goBack={this.goBack}
       >
-        {/* Render invalid state */}
-        {!messageId && this.renderInvalidState()}
-
-        {/* Render loading state */}
-        {messageId && isLoading && this.renderLoadingState()}
-
-        {/* Render error state */}
-        {messageId && hasError && this.renderErrorState(messageId)}
-
-        {/* Render full content */}
-        {messageId && message && this.renderFullContent(message, service)}
+        {this.renderCurrentState()}
       </BaseScreenComponent>
     );
   }
 }
 
-const messageLoadLoadingSelector = createLoadingSelector([
-  FetchRequestActions.MESSAGE_LOAD
+const messageAdnServiceLoadLoadingSelector = createLoadingSelector([
+  FetchRequestActions.MESSAGE_AND_SERVICE_LOAD
 ]);
 
-const messageLoadErrorSelector = createErrorSelector([
-  FetchRequestActions.MESSAGE_LOAD
+const messageAndServiceLoadErrorSelector = createErrorSelector([
+  FetchRequestActions.MESSAGE_AND_SERVICE_LOAD
 ]);
 
 const mapStateToProps = (
   state: GlobalState,
   ownProps: OwnProps
 ): ReduxMapStateToProps => {
-  const isLoading = messageLoadLoadingSelector(state);
+  const isLoading = messageAdnServiceLoadLoadingSelector(state);
 
-  const hasError = messageLoadErrorSelector(state).isSome();
+  const hasError = messageAndServiceLoadErrorSelector(state).isSome();
 
   const messageId = ownProps.navigation.getParam(
     "messageId",

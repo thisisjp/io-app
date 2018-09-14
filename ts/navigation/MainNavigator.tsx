@@ -94,6 +94,7 @@ const navigation = createBottomTabNavigator(
     }
   },
   {
+    lazy: true,
     navigationOptions: ({ navigation: nav }) => ({
       tabBarLabel: ({ tintColor }) => {
         const { routeName } = nav.state;
