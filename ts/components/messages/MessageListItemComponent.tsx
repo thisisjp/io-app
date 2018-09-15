@@ -30,22 +30,20 @@ const TouchableFeedbackComponent = Platform.select({
 const styles = StyleSheet.create({
   itemContainer: {
     paddingLeft: variables.contentPadding,
-    paddingRight: variables.contentPadding
+    paddingRight: variables.contentPadding,
+    paddingTop: 16
   },
 
   grid: {
     borderBottomColor: variables.brandLightGray,
     borderBottomWidth: 1,
-    paddingBottom: 16,
+    paddingBottom: 0,
     paddingLeft: 0,
-    paddingRight: 0,
-    paddingTop: 23
+    paddingRight: 0
   },
 
-  iconContainer: {
-    justifyContent: "flex-end",
-    alignItems: "center",
-    flexDirection: "row"
+  serviceRow: {
+    marginBottom: 16
   },
 
   serviceText: {
@@ -58,7 +56,18 @@ const styles = StyleSheet.create({
   },
 
   subjectRow: {
-    paddingTop: 10
+    paddingTop: 10,
+    marginBottom: 16
+  },
+
+  iconContainer: {
+    justifyContent: "flex-end",
+    alignItems: "center",
+    flexDirection: "row"
+  },
+
+  ctaBarRow: {
+    marginBottom: 16
   }
 });
 
@@ -80,7 +89,7 @@ export class MessageListItemComponent extends React.PureComponent<
       >
         <View style={styles.itemContainer}>
           <Grid style={styles.grid}>
-            <Row>
+            <Row style={styles.serviceRow}>
               <Col>
                 <Text
                   style={styles.serviceText}
@@ -108,7 +117,7 @@ export class MessageListItemComponent extends React.PureComponent<
                 />
               </Col>
             </Row>
-            <Row>
+            <Row style={styles.ctaBarRow}>
               <MessageCTABar message={message} service={service} />
             </Row>
           </Grid>
