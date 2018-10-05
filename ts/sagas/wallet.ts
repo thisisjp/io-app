@@ -516,7 +516,7 @@ function* showTransactionSummaryHandler(
   // tapping on the payment banner further in the process.
   // in all cases but the last one, a payload will be
   // provided, and it will contain the RptId information
-  if (action.payload.kind === "fromRptId") {
+  if (isActionOf(paymentRequestTransactionSummaryFromRptId, action)) {
     // either the QR code has been read, or the
     // data has been entered manually. Store the
     // payload and proceed with showing the
