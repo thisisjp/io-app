@@ -1,6 +1,7 @@
 package it.teamdigitale.app.italiaapp;
 
 import android.os.Bundle;
+import android.view.WindowManager;
 import com.facebook.react.ReactActivity;
 import org.devio.rn.splashscreen.SplashScreen;
 
@@ -18,6 +19,7 @@ public class MainActivity extends ReactActivity {
     // see https://github.com/crazycodeboy/react-native-splash-screen#third-stepplugin-configuration
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,WindowManager.LayoutParams.FLAG_SECURE);
         SplashScreen.show(this, R.style.SplashScreenTheme);
         super.onCreate(savedInstanceState);
     }

@@ -1,7 +1,15 @@
 import { isNone, Option } from "fp-ts/lib/Option";
 import { NavigationActions, NavigationState } from "react-navigation";
 import { Effect } from "redux-saga";
-import { call, fork, put, race, select, takeLatest } from "redux-saga/effects";
+import {
+  call,
+  fork,
+  put,
+  race,
+  select,
+  take,
+  takeLatest
+} from "redux-saga/effects";
 import { getType } from "typesafe-actions";
 
 import { BackendClient } from "../api/backend";
@@ -12,6 +20,10 @@ import { IdentityProvider } from "../models/IdentityProvider";
 import AppNavigator from "../navigation/AppNavigator";
 import { startApplicationInitialization } from "../store/actions/application";
 import { sessionExpired } from "../store/actions/authentication";
+import {
+  identificationRequest,
+  identificationSuccess
+} from "../store/actions/identification";
 import {
   navigateToMainNavigatorAction,
   navigateToMessageDetailScreenAction
@@ -40,7 +52,6 @@ import { checkAcceptedTosSaga } from "./startup/checkAcceptedTosSaga";
 import { checkConfiguredPinSaga } from "./startup/checkConfiguredPinSaga";
 import { checkProfileEnabledSaga } from "./startup/checkProfileEnabledSaga";
 import { loadSessionInformationSaga } from "./startup/loadSessionInformationSaga";
-import { loginWithPinSaga } from "./startup/pinLoginSaga";
 import { watchAbortOnboardingSaga } from "./startup/watchAbortOnboardingSaga";
 import { watchApplicationActivitySaga } from "./startup/watchApplicationActivitySaga";
 import { watchMessagesLoadOrCancelSaga } from "./startup/watchLoadMessagesSaga";
@@ -49,6 +60,7 @@ import { watchLogoutSaga } from "./startup/watchLogoutSaga";
 import { watchPinResetSaga } from "./startup/watchPinResetSaga";
 import { watchSessionExpiredSaga } from "./startup/watchSessionExpiredSaga";
 import { watchWalletSaga } from "./wallet";
+import { waitForIdentification } from "./identification";
 
 /**
  * Handles the application startup and the main application logic loop
@@ -160,16 +172,17 @@ function* initializeApplicationSaga(): IterableIterator<Effect> {
     if (!isSessionRefreshed) {
       // The user was previously logged in, so no onboarding is needed
       // The session was valid so the user didn't event had to do a full login,
-      // in this case we ask the user to provide the PIN as a "lighter" login
-      yield race({
-        login: call(loginWithPinSaga, storedPin),
-        reset: call(watchPinResetSaga)
-      });
+      // in this case we ask the user to identify using the PIN.
+      const identificationResult = yield call(waitForIdentification);
+      if (!identificationResult) {
+        yield put(startApplicationInitialization());
+        return;
+      }
     }
   }
 
   //
-  // User is autenticated, session token is valid
+  // User is authenticated, session token is valid
   //
 
   // the wallet token is available,

@@ -18,6 +18,7 @@ import contentReducer from "./content";
 import deepLinkReducer from "./deepLink";
 import entitiesReducer from "./entities";
 import errorReducer from "./error";
+import identificationReducer from "./identification";
 import loadingReducer from "./loading";
 import navigationReducer from "./navigation";
 import navigationHistoryReducer from "./navigationHistory";
@@ -65,6 +66,7 @@ const appReducer: Reducer<GlobalState, Action> = combineReducers<
   content: contentReducer,
   preferences: preferencesReducer,
   pinlogin: pinloginReducer,
+  identification: identificationReducer,
 
   //
   // persisted state
