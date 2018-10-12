@@ -23,6 +23,7 @@ interface Props {
   inactiveColor: string;
   activeColor: string;
   onFulfill: (code: PinString, isValid: boolean) => void;
+  clearOnInvalid?: boolean
 }
 
 interface State {
@@ -86,6 +87,10 @@ class Pinpad extends React.PureComponent<Props, State> {
 
       if (isValid) {
         this.foldInputRef(blurElement);
+      } else {
+        if (this.props.clearOnInvalid) {
+          this.clear();
+        }
       }
 
       // Fire the callback asynchronously, otherwise this component

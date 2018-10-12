@@ -1,21 +1,33 @@
 import { getType } from "typesafe-actions";
 
+import { PinString } from "../../types/PinString";
 import {
   identificationCancel,
-  identificationRequest,
+  identificationReset,
+  identificationStart,
   identificationSuccess
 } from "../actions/identification";
 import { NavigationActions } from "../actions/navigation";
 import { Action } from "../actions/types";
 
+export type IdentificationCancelData = {
+  action: NavigationActions;
+  label: string;
+};
+
+export type IdentificationSuccessData = {
+  action: NavigationActions;
+};
+
 type IdentificationUnidentifiedState = {
   kind: "unidentified";
 };
 
-type IdentificationRequestedState = {
-  kind: "requested";
-  onIdentificationCancelAction?: NavigationActions;
-  onIdentificationSuccessAction?: NavigationActions;
+type IdentificationStartedState = {
+  kind: "started";
+  pin: PinString;
+  identificationCancelData?: IdentificationCancelData;
+  identificationSuccessData?: IdentificationSuccessData;
 };
 
 type IdentificationIdentifiedState = {
@@ -24,7 +36,7 @@ type IdentificationIdentifiedState = {
 
 export type IdentificationState =
   | IdentificationUnidentifiedState
-  | IdentificationRequestedState
+  | IdentificationStartedState
   | IdentificationIdentifiedState;
 
 export const INITIAL_STATE: IdentificationUnidentifiedState = {
@@ -36,9 +48,9 @@ const reducer = (
   action: Action
 ): IdentificationState => {
   switch (action.type) {
-    case getType(identificationRequest):
+    case getType(identificationStart):
       return {
-        kind: "requested",
+        kind: "started",
         ...action.payload
       };
 
@@ -51,6 +63,9 @@ const reducer = (
       return {
         kind: "identified"
       };
+
+    case getType(identificationReset):
+      return INITIAL_STATE;
 
     default:
       return state;

@@ -1,15 +1,7 @@
 import { isNone, Option } from "fp-ts/lib/Option";
 import { NavigationActions, NavigationState } from "react-navigation";
 import { Effect } from "redux-saga";
-import {
-  call,
-  fork,
-  put,
-  race,
-  select,
-  take,
-  takeLatest
-} from "redux-saga/effects";
+import { call, fork, put, race, select, takeLatest } from "redux-saga/effects";
 import { getType } from "typesafe-actions";
 
 import { BackendClient } from "../api/backend";
@@ -20,10 +12,6 @@ import { IdentityProvider } from "../models/IdentityProvider";
 import AppNavigator from "../navigation/AppNavigator";
 import { startApplicationInitialization } from "../store/actions/application";
 import { sessionExpired } from "../store/actions/authentication";
-import {
-  identificationRequest,
-  identificationSuccess
-} from "../store/actions/identification";
 import {
   navigateToMainNavigatorAction,
   navigateToMessageDetailScreenAction
@@ -45,6 +33,10 @@ import { GlobalState } from "../store/reducers/types";
 import { PinString } from "../types/PinString";
 import { SagaCallReturnType } from "../types/utils";
 import { getPin } from "../utils/keychain";
+import {
+  startAndWaitIdentificationResult,
+  watchIdentificationRequest
+} from "./identification";
 import { updateInstallationSaga } from "./notifications";
 import { loadProfile, watchProfileUpsertRequestsSaga } from "./profile";
 import { authenticationSaga } from "./startup/authenticationSaga";
@@ -60,11 +52,11 @@ import { watchLogoutSaga } from "./startup/watchLogoutSaga";
 import { watchPinResetSaga } from "./startup/watchPinResetSaga";
 import { watchSessionExpiredSaga } from "./startup/watchSessionExpiredSaga";
 import { watchWalletSaga } from "./wallet";
-import { waitForIdentification } from "./identification";
 
 /**
  * Handles the application startup and the main application logic loop
  */
+// tslint:disable-next-line:cognitive-complexity
 function* initializeApplicationSaga(): IterableIterator<Effect> {
   // Reset the profile cached in redux: at each startup we want to load a fresh
   // user profile.
@@ -173,7 +165,10 @@ function* initializeApplicationSaga(): IterableIterator<Effect> {
       // The user was previously logged in, so no onboarding is needed
       // The session was valid so the user didn't event had to do a full login,
       // in this case we ask the user to identify using the PIN.
-      const identificationResult = yield call(waitForIdentification);
+      const identificationResult = yield call(
+        startAndWaitIdentificationResult,
+        storedPin
+      );
       if (!identificationResult) {
         yield put(startApplicationInitialization());
         return;
@@ -231,6 +226,8 @@ function* initializeApplicationSaga(): IterableIterator<Effect> {
   yield fork(watchLogoutSaga, backendClient.logout);
   // Watch for requests to reset the PIN
   yield fork(watchPinResetSaga);
+  // Watch for identification request
+  yield fork(watchIdentificationRequest, storedPin);
 
   // Check if we have a pending notification message
   const pendingMessageState: PendingMessageState = yield select<GlobalState>(

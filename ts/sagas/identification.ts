@@ -1,26 +1,69 @@
 import { Effect } from "redux-saga";
-import { put, take } from "redux-saga/effects";
+import { call, put, take, takeLatest } from "redux-saga/effects";
 import { ActionType, getType } from "typesafe-actions";
 
+import { startApplicationInitialization } from "../store/actions/application";
+import { sessionInvalid } from "../store/actions/authentication";
 import {
-  identificationCancel,
+  identificationPinReset,
   identificationRequest,
+  identificationReset,
+  identificationStart,
   identificationSuccess
 } from "../store/actions/identification";
+import { PinString } from "../types/PinString";
+import { deletePin } from "../utils/keychain";
 
-export function* waitForIdentification(): IterableIterator<Effect> {
-  yield put(identificationRequest());
+export function* waitIdentificationResult(): IterableIterator<Effect> {
   const resultAction:
     | ActionType<typeof identificationSuccess>
-    | ActionType<typeof identificationCancel> = yield take([
+    | ActionType<typeof identificationPinReset> = yield take([
     getType(identificationSuccess),
-    getType(identificationCancel)
+    getType(identificationPinReset)
   ]);
 
-  switch (resultAction.type) {
-    case getType(identificationSuccess):
-      return true;
-    default:
-      return false;
+  if (resultAction.type === getType(identificationPinReset)) {
+    // Delete the PIN
+    yield call(deletePin);
+
+    // Invalidate the session
+    yield put(sessionInvalid());
+
+    // Hide the identification screen
+    yield put(identificationReset());
+
+    return false;
   }
+
+  return true;
+}
+
+// Start from saga
+export function* startAndWaitIdentificationResult(pin: PinString) {
+  yield put(identificationStart(pin));
+
+  const result = yield call(waitIdentificationResult);
+  return result;
+}
+
+// Started by redux action
+export function* controlAndWaitIdentificationResult(
+  pin: PinString
+): IterableIterator<Effect> {
+  yield put(identificationStart(pin));
+  const identificationResult = yield call(waitIdentificationResult);
+
+  if (!identificationResult) {
+    yield put(startApplicationInitialization());
+  }
+}
+
+export function* watchIdentificationRequest(
+  pin: PinString
+): IterableIterator<Effect> {
+  yield takeLatest(
+    getType(identificationRequest),
+    controlAndWaitIdentificationResult,
+    pin
+  );
 }

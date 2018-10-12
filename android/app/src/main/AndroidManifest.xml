@@ -17,7 +17,7 @@
     <meta-data  android:name="com.dieam.reactnativepushnotification.notification_channel_description" android:value="@string/notification_channel_description"/>
 
     <receiver android:name="com.google.android.gms.gcm.GcmReceiver" android:exported="true" android:permission="com.google.android.c2dm.permission.SEND">
-      <intent-filter>
+      <intent-filter>sl
         <action android:name="com.google.android.c2dm.intent.RECEIVE" />
         <category android:name="it.teamdigitale.app.italiaapp" />
       </intent-filter>
