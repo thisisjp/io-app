@@ -10,6 +10,7 @@ import { CreatedMessageWithoutContent } from "../../../definitions/backend/Creat
 import { ServiceId } from "../../../definitions/backend/ServiceId";
 import { ServicePublic } from "../../../definitions/backend/ServicePublic";
 import MessageDetailComponent from "../../components/messages/MessageDetailComponent";
+import MessageShareButton from "../../components/messages/MessageShareButton";
 import BaseScreenComponent from "../../components/screens/BaseScreenComponent";
 import I18n from "../../i18n";
 import { contentServiceLoad } from "../../store/actions/content";
@@ -118,18 +119,21 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
     paymentByRptId: Props["paymentByRptId"]
   ) => {
     return (
-      <Content noPadded={true}>
-        <MessageDetailComponent
-          message={message}
-          paymentByRptId={paymentByRptId}
-          service={service}
-          onServiceLinkPress={
-            pot.isSome(service)
-              ? () => this.onServiceLinkPressHandler(service.value)
-              : undefined
-          }
-        />
-      </Content>
+      <React.Fragment>
+        <Content noPadded={true}>
+          <MessageDetailComponent
+            message={message}
+            paymentByRptId={paymentByRptId}
+            service={service}
+            onServiceLinkPress={
+              pot.isSome(service)
+                ? () => this.onServiceLinkPressHandler(service.value)
+                : undefined
+            }
+          />
+        </Content>
+        <MessageShareButton />
+      </React.Fragment>
     );
   };
 

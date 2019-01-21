@@ -96,6 +96,7 @@ export default class MessageDetailComponent extends React.PureComponent<Props> {
           />
         </View>
 
+
         <MessageCTABar
           message={message}
           paymentByRptId={paymentByRptId}

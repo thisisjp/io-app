@@ -49,6 +49,8 @@ target 'ItaliaApp' do
 
   pod 'TouchID', :path => '../node_modules/react-native-touch-id'
 
+  pod 'RNShare', :path => '../node_modules/react-native-share'
+
 end
 
 # Fix a open bug in react-native-config
