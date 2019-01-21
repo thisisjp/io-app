@@ -1,14 +1,16 @@
 import { Button, Content, Text, View } from "native-base";
 import * as React from "react";
+import { StyleSheet } from "react-native";
 import { NavigationScreenProp, NavigationState } from "react-navigation";
 import { connect } from "react-redux";
 
 import AbortOnboardingModal from "../../components/AbortOnboardingModal";
+import MarkdownViewer from "../../components/MarkdownViewer";
 import BaseScreenComponent from "../../components/screens/BaseScreenComponent";
-import Markdown from "../../components/ui/Markdown";
 import I18n from "../../i18n";
 import { abortOnboarding, tosAccept } from "../../store/actions/onboarding";
 import { ReduxProps } from "../../store/actions/types";
+import variables from "../../theme/variables";
 
 type OwnProps = {
   navigation: NavigationScreenProp<NavigationState>;
@@ -19,6 +21,13 @@ type Props = ReduxProps & OwnProps;
 type State = {
   showAbortOnboardingModal: boolean;
 };
+
+const styles = StyleSheet.create({
+  webview: {
+    marginLeft: variables.contentPadding,
+    marginRight: variables.contentPadding
+  }
+});
 
 /**
  * A screen to show the ToS to the user.
@@ -46,11 +55,10 @@ class TosScreen extends React.PureComponent<Props, State> {
         }
       >
         <Content noPadded={true}>
-          <View content={true}>
-            <Markdown lazyOptions={{ lazy: true }}>
-              {I18n.t("profile.main.privacy.text")}
-            </Markdown>
-          </View>
+          <MarkdownViewer
+            markdown={I18n.t("profile.main.privacy.text")}
+            webViewStyle={styles.webview}
+          />
         </Content>
         {isProfile === false && (
           <View footer={true}>
