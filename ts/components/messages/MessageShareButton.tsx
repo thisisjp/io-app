@@ -44,10 +44,14 @@ class MessageShareButton extends React.PureComponent<Props, State> {
     );
   }
   private handleOnPress = () => {
-    Share.open({
+    Share.shareSingle({
       url: "https://io.italia.it/",
       title: "I am the title",
-      message: "I am the message and i have very very long. Thanks for sharing!"
+      subject: "I am the subject",
+      message:
+        "I am the message and i have very very long. Thanks for sharing!",
+      type: "text/html",
+      social: "email"
     }).then(_ => 0, __ => 0);
   };
 }
