@@ -1,25 +1,19 @@
+import { fromNullable } from "fp-ts/lib/Option";
 import * as pot from "italia-ts-commons/lib/pot";
-import { Content, List, ListItem } from "native-base";
+import { untag } from "italia-ts-commons/lib/types";
+import { Content, List, ListItem, View } from "native-base";
 import * as React from "react";
 import { Alert } from "react-native";
 import { NavigationScreenProp, NavigationState } from "react-navigation";
 import { connect } from "react-redux";
 
-import { fromNullable } from "fp-ts/lib/Option";
-
-import { untag } from "italia-ts-commons/lib/types";
-
-import I18n from "../../i18n";
-
-import { ReduxProps } from "../../store/actions/types";
-import { GlobalState } from "../../store/reducers/types";
-
+import MarkdownViewer from "../../components/MarkdownViewer";
 import PreferenceItem from "../../components/PreferenceItem";
 import TopScreenComponent from "../../components/screens/TopScreenComponent";
-import Markdown from "../../components/ui/Markdown";
-
+import I18n from "../../i18n";
 import ROUTES from "../../navigation/routes";
-
+import { ReduxProps } from "../../store/actions/types";
+import { GlobalState } from "../../store/reducers/types";
 import { getLocalePrimary } from "../../utils/locale";
 
 const unavailableAlert = () =>
@@ -55,7 +49,12 @@ class PreferencesScreen extends React.Component<Props> {
   public render() {
     const contextualHelp = {
       title: I18n.t("preferences.title"),
-      body: () => <Markdown>{I18n.t("preferences.preferencesHelp")}</Markdown>
+      body: () => (
+        <MarkdownViewer
+          markdown={I18n.t("preferences.preferencesHelp")}
+          webViewStyle={{ margin: 20 }}
+        />
+      )
     };
 
     const { potProfile } = this.props;

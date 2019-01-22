@@ -11,13 +11,16 @@ import { ReduxProps } from "../../store/actions/types";
 import { remarkProcessor } from "../../utils/markdown";
 import { handleInternalLink } from "./handlers/internalLink";
 import {
-  NOTIFY_BODY_HEIGHT_SCRIPT,
+  NOTIFY_DOCUMENT_HEIGHT_SCRIPT,
   NOTIFY_INTERNAL_LINK_CLICK_SCRIPT
 } from "./script";
 import { WebViewMessage } from "./types";
 
 const INJECTED_JAVASCRIPT = `
+${NOTIFY_DOCUMENT_HEIGHT_SCRIPT}
 ${NOTIFY_INTERNAL_LINK_CLICK_SCRIPT}
+
+true
 `;
 
 const GLOBAL_CSS = `
@@ -99,6 +102,7 @@ class MarkdownViewer extends React.PureComponent<Props, State> {
   }
 
   public render() {
+    console.log("MarkdownViewer::render", this.props, this.state);
     const { webViewStyle } = this.props;
     const { html, htmlBodyHeight } = this.state;
 
@@ -106,39 +110,49 @@ class MarkdownViewer extends React.PureComponent<Props, State> {
     const containerStyle: ViewStyle =
       htmlBodyHeight === 0
         ? {
-            height: 0
+            display: "none"
           }
         : {
             height: htmlBodyHeight
           };
 
-    return (
-      <View style={containerStyle}>
-        <WebView
-          ref={this.webViewRef}
-          scrollEnabled={false}
-          overScrollMode={"never"}
-          style={webViewStyle}
-          originWhitelist={["*"]}
-          source={{ html, baseUrl: "" }}
-          javaScriptEnabled={true}
-          injectedJavaScript={INJECTED_JAVASCRIPT}
-          onLoadEnd={this.handleLoadEnd}
-          onMessage={this.handleWebViewMessage}
-        />
-      </View>
-    );
+    const wvStyle: ViewStyle = {
+      display: "none"
+    };
+
+    if (html) {
+      return (
+        <View style={containerStyle}>
+          <WebView
+            ref={this.webViewRef}
+            scrollEnabled={false}
+            overScrollMode={"never"}
+            style={[webViewStyle, wvStyle]}
+            originWhitelist={["*"]}
+            source={{ html, baseUrl: "" }}
+            javaScriptEnabled={true}
+            injectedJavaScript={INJECTED_JAVASCRIPT}
+            onLoadEnd={this.handleLoadEnd}
+            onMessage={this.handleWebViewMessage}
+          />
+        </View>
+      );
+    }
+
+    return null;
   }
 
   // When the injected html is loaded inject the script to notify the height
   private handleLoadEnd = () => {
     if (this.webViewRef.current) {
-      this.webViewRef.current.injectJavaScript(NOTIFY_BODY_HEIGHT_SCRIPT);
+      console.log("MarkdownViewer::handleLoadEnd");
+      this.webViewRef.current.postMessage("");
     }
   };
 
   // A function that handles message sent by the WebView component
   private handleWebViewMessage = (event: WebViewMessageEvent) => {
+    console.log("MarkdownViewer::handleWebViewMessage", event.nativeEvent.data);
     const { dispatch } = this.props;
 
     // We validate the format of the message with io-ts

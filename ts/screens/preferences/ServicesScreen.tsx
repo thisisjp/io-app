@@ -11,24 +11,20 @@ import {
 import { NavigationInjectedProps } from "react-navigation";
 import { connect } from "react-redux";
 
-import I18n from "../../i18n";
-
-import { ServicePublic } from "../../../definitions/backend/ServicePublic";
-
-import { contentServiceLoad } from "../../store/actions/content";
-import { Dispatch, ReduxProps } from "../../store/actions/types";
-import { GlobalState } from "../../store/reducers/types";
-
-import { isDefined } from "../../utils/guards";
-
 import { ServiceId } from "../../../definitions/backend/ServiceId";
+import { ServicePublic } from "../../../definitions/backend/ServicePublic";
+import MarkdownViewer from "../../components/MarkdownViewer";
 import TopScreenComponent from "../../components/screens/TopScreenComponent";
 import { ServiceListItem } from "../../components/services/ServiceListItem";
-import Markdown from "../../components/ui/Markdown";
+import I18n from "../../i18n";
+import { contentServiceLoad } from "../../store/actions/content";
 import { navigateToServiceDetailsScreen } from "../../store/actions/navigation";
 import { loadVisibleServices } from "../../store/actions/services";
+import { Dispatch, ReduxProps } from "../../store/actions/types";
+import { GlobalState } from "../../store/reducers/types";
 import variables from "../../theme/variables";
 import { InferNavigationParams } from "../../types/react";
+import { isDefined } from "../../utils/guards";
 import ServiceDetailsScreen from "./ServiceDetailsScreen";
 
 type OwnProps = NavigationInjectedProps;
@@ -101,7 +97,9 @@ class ServicesScreen extends React.Component<Props> {
         subtitle={I18n.t("services.subTitle")}
         contextualHelp={{
           title: I18n.t("services.title"),
-          body: () => <Markdown>{I18n.t("services.servicesHelp")}</Markdown>
+          body: () => (
+            <MarkdownViewer markdown={I18n.t("services.servicesHelp")} />
+          )
         }}
       >
         <SectionList
