@@ -10,15 +10,11 @@ import { connect } from "react-redux";
 import { ReduxProps } from "../../store/actions/types";
 import { remarkProcessor } from "../../utils/markdown";
 import { handleInternalLink } from "./handlers/internalLink";
-import {
-  NOTIFY_DOCUMENT_HEIGHT_SCRIPT,
-  NOTIFY_INTERNAL_LINK_CLICK_SCRIPT
-} from "./script";
+import { ADD_MESSAGE_LISTENER_SCRIPT } from "./script";
 import { WebViewMessage } from "./types";
 
 const INJECTED_JAVASCRIPT = `
-${NOTIFY_DOCUMENT_HEIGHT_SCRIPT}
-${NOTIFY_INTERNAL_LINK_CLICK_SCRIPT}
+${ADD_MESSAGE_LISTENER_SCRIPT}
 
 true
 `;
@@ -110,15 +106,11 @@ class MarkdownViewer extends React.PureComponent<Props, State> {
     const containerStyle: ViewStyle =
       htmlBodyHeight === 0
         ? {
-            display: "none"
+            height: 1000
           }
         : {
             height: htmlBodyHeight
           };
-
-    const wvStyle: ViewStyle = {
-      display: "none"
-    };
 
     if (html) {
       return (
@@ -127,13 +119,13 @@ class MarkdownViewer extends React.PureComponent<Props, State> {
             ref={this.webViewRef}
             scrollEnabled={false}
             overScrollMode={"never"}
-            style={[webViewStyle, wvStyle]}
+            style={webViewStyle}
             originWhitelist={["*"]}
             source={{ html, baseUrl: "" }}
             javaScriptEnabled={true}
             injectedJavaScript={INJECTED_JAVASCRIPT}
-            onLoadEnd={this.handleLoadEnd}
             onMessage={this.handleWebViewMessage}
+            onLoadEnd={this.handleLoadEnd}
           />
         </View>
       );

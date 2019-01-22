@@ -2,6 +2,53 @@
  * This file contains all the JS scripts used by the MarkdownViewer component.
  */
 
+export const ADD_MESSAGE_LISTENER_SCRIPT = `
+function onMessage(event) {
+  alert("On message");
+}
+
+function addMessageHandler() {
+  if (document.hasOwnProperty('addEventListener')) {
+    alert("Document has addEventListener");
+    document.addEventListener("message", onMessage, false);
+  } else if (window.hasOwnProperty('addEventListener')) {
+    alert("Window has addEventListener");
+    window.addEventListener("message", onMessage, false);
+  } else {
+    alert("No way to add message handler");
+  }
+}
+
+setTimeout(addMessageHandler, 0);
+`;
+
+// Script to check window object
+export const CHECK_POSTMESSAGE_SCRIPT = `
+
+
+function internalPostMessage(message) {
+  if (document.hasOwnProperty('postMessage')) {
+    setTimeout(function() {
+      window.postMessage(message);
+    }, 500);
+  } else if (window.hasOwnProperty('postMessage')) {
+    setTimeout(function() {
+      window.postMessage(message);
+    }, 500);
+  } else {
+    alert("No way to post message");
+  }
+}
+
+const message = JSON.stringify({
+  type: "RESIZE_MESSAGE",
+  payload: {
+    height: document.body.scrollHeight
+  }
+});
+internalPostMessage(message);
+`;
+
 // Script to notify the height of the body to the react WebView component
 export const NOTIFY_BODY_HEIGHT_SCRIPT = `
 function waitForBridge() {
