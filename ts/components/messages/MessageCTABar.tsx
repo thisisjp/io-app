@@ -9,6 +9,7 @@ import { connect } from "react-redux";
 
 import { ServicePublic } from "../../../definitions/backend/ServicePublic";
 import I18n from "../../i18n";
+import { addCalendarEvent } from "../../store/actions/calendarEvents";
 import { navigateToPaymentTransactionSummaryScreen } from "../../store/actions/navigation";
 import { ReduxProps } from "../../store/actions/types";
 import { paymentInitializeState } from "../../store/actions/wallet/payment";
@@ -235,15 +236,22 @@ class MessageCTABar extends React.PureComponent<Props, State> {
       allDay: true,
       alarms: []
     })
-      .then(_ =>
+      .then(eventId => {
         showToast(
           I18n.t("messages.cta.reminderAddSuccess", {
             title,
             calendarTitle: calendar.title
           }),
           "success"
-        )
-      )
+        );
+        // Add the event to the store
+        this.props.dispatch(
+          addCalendarEvent({
+            messageId: message.id,
+            eventId
+          })
+        );
+      })
       .catch(_ =>
         showToast(I18n.t("messages.cta.reminderAddFailure"), "danger")
       );
