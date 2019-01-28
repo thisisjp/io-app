@@ -2,6 +2,7 @@ import { getType } from "typesafe-actions";
 
 import { addCalendarEvent } from "../../../actions/calendarEvents";
 import { Action } from "../../../actions/types";
+import { GlobalState } from "../../types";
 
 export type CalendarEvent = {
   messageId: string;
@@ -9,7 +10,7 @@ export type CalendarEvent = {
 };
 
 export type CalendarEventsByMessageIdState = {
-  [key: string]: CalendarEvent;
+  [key: string]: CalendarEvent | undefined;
 };
 
 export const INITIAL_STATE: CalendarEventsByMessageIdState = {};
@@ -32,5 +33,10 @@ const reducer = (
       return state;
   }
 };
+
+// Selectors
+export const calendarEventByMessageIdSelector = (messageId: string) => (
+  state: GlobalState
+) => state.entities.calendarEvents.byMessageId[messageId];
 
 export default reducer;

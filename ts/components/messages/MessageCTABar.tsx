@@ -13,7 +13,12 @@ import { addCalendarEvent } from "../../store/actions/calendarEvents";
 import { navigateToPaymentTransactionSummaryScreen } from "../../store/actions/navigation";
 import { ReduxProps } from "../../store/actions/types";
 import { paymentInitializeState } from "../../store/actions/wallet/payment";
+import {
+  CalendarEvent,
+  calendarEventByMessageIdSelector
+} from "../../store/reducers/entities/calendarEvents/calendarEventsByMessageId";
 import { PaymentByRptIdState } from "../../store/reducers/entities/payments";
+import { GlobalState } from "../../store/reducers/types";
 import variables from "../../theme/variables";
 import { MessageWithContentPO } from "../../types/MessageWithContentPO";
 import { checkAndRequestPermission } from "../../utils/calendar";
@@ -38,9 +43,10 @@ type OwnProps = {
   paymentByRptId: PaymentByRptIdState;
 };
 
-type Props = OwnProps & ReduxProps;
+type Props = OwnProps & ReturnType<typeof mapStateToProps> & ReduxProps;
 
 type State = {
+  isEventInCalendar: boolean;
   isSelectCalendarModalOpen: boolean;
 };
 
@@ -79,6 +85,7 @@ class MessageCTABar extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      isEventInCalendar: false,
       isSelectCalendarModalOpen: false
     };
   }
@@ -113,7 +120,12 @@ class MessageCTABar extends React.PureComponent<Props, State> {
         />
 
         <View style={styles.reminderButtonContainer}>
-          <Button block={true} bordered={true} onPress={onPressHandler}>
+          <Button
+            block={true}
+            bordered={true}
+            onPress={onPressHandler}
+            disabled={this.state.isEventInCalendar}
+          >
             <Text>{I18n.t("messages.cta.reminder")}</Text>
           </Button>
         </View>
@@ -173,6 +185,23 @@ class MessageCTABar extends React.PureComponent<Props, State> {
     );
   }
 
+  public componentDidMount() {
+    const { calendarEvent } = this.props;
+
+    if (calendarEvent) {
+      this.checkIfEventInCalendar(calendarEvent);
+    }
+  }
+
+  public componentDidUpdate(prevProps: Props) {
+    const { calendarEvent: prevCalendarEvent } = prevProps;
+    const { calendarEvent } = this.props;
+
+    if (calendarEvent && calendarEvent !== prevCalendarEvent) {
+      this.checkIfEventInCalendar(calendarEvent);
+    }
+  }
+
   public render() {
     const { message, service, containerStyle, paymentByRptId } = this.props;
     const { isSelectCalendarModalOpen } = this.state;
@@ -217,6 +246,22 @@ class MessageCTABar extends React.PureComponent<Props, State> {
     });
   };
 
+  private checkIfEventInCalendar = (calendarEvent: CalendarEvent) => {
+    checkAndRequestPermission()
+      .then(hasPermission => {
+        if (hasPermission) {
+          RNCalendarEvents.findEventById(calendarEvent.eventId)
+            .then(_ =>
+              this.setState({
+                isEventInCalendar: true
+              })
+            )
+            .catch();
+        }
+      })
+      .catch();
+  };
+
   private addReminderToCalendar = (
     message: MessageWithContentPO,
     calendar: Calendar,
@@ -258,4 +303,8 @@ class MessageCTABar extends React.PureComponent<Props, State> {
   };
 }
 
-export default connect()(MessageCTABar);
+const mapStateToProps = (state: GlobalState, ownProps: OwnProps) => ({
+  calendarEvent: calendarEventByMessageIdSelector(ownProps.message.id)(state)
+});
+
+export default connect(mapStateToProps)(MessageCTABar);
