@@ -1,6 +1,9 @@
 import { getType } from "typesafe-actions";
 
-import { addCalendarEvent } from "../../../actions/calendarEvents";
+import {
+  addCalendarEvent,
+  removeCalendarEvent
+} from "../../../actions/calendarEvents";
 import { Action } from "../../../actions/types";
 import { GlobalState } from "../../types";
 
@@ -27,6 +30,15 @@ const reducer = (
         ...state,
         [messageId]: action.payload
       };
+    }
+
+    case getType(removeCalendarEvent): {
+      const messageId = action.payload.messageId;
+
+      const stateCopy = { ...state };
+      // tslint:disable-next-line:no-object-mutation
+      delete stateCopy[messageId];
+      return stateCopy;
     }
 
     default:

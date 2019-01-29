@@ -28,7 +28,7 @@ declare module "react-native-calendar-events" {
 
   export type Event = {
     id: string;
-  }
+  };
 
   export type SaveEventDetails = {
     id?: string;
@@ -55,6 +55,7 @@ declare module "react-native-calendar-events" {
       options?: SaveEventOptions
     ): Promise<string>;
     findEventById(id: string): Promise<Event>;
+    removeEvent(id: string): Promise<void>;
   };
 
   export default RNCalendarEvents;

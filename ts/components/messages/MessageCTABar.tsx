@@ -1,7 +1,7 @@
 import { isSome, none } from "fp-ts/lib/Option";
 import { RptIdFromString } from "italia-pagopa-commons/lib/pagopa";
 import * as pot from "italia-ts-commons/lib/pot";
-import { Button, H1, Text, View } from "native-base";
+import { Button, H1, Icon, Text, View } from "native-base";
 import * as React from "react";
 import { StyleSheet, ViewStyle } from "react-native";
 import RNCalendarEvents, { Calendar } from "react-native-calendar-events";
@@ -9,7 +9,10 @@ import { connect } from "react-redux";
 
 import { ServicePublic } from "../../../definitions/backend/ServicePublic";
 import I18n from "../../i18n";
-import { addCalendarEvent } from "../../store/actions/calendarEvents";
+import {
+  addCalendarEvent,
+  removeCalendarEvent
+} from "../../store/actions/calendarEvents";
 import { navigateToPaymentTransactionSummaryScreen } from "../../store/actions/navigation";
 import { ReduxProps } from "../../store/actions/types";
 import { paymentInitializeState } from "../../store/actions/wallet/payment";
@@ -91,22 +94,35 @@ class MessageCTABar extends React.PureComponent<Props, State> {
   }
 
   private renderReminderCTA(
-    dueDate: NonNullable<MessageWithContentPO["content"]["due_date"]>
+    dueDate: NonNullable<MessageWithContentPO["content"]["due_date"]>,
+    calendarEvent?: CalendarEvent
   ) {
-    // Create an action that open the Calendar to let the user add an event
-    const onPressHandler = () => {
-      // Check the autorization status
-      checkAndRequestPermission()
-        .then(hasPermission => {
-          if (hasPermission) {
-            this.setState({
-              isSelectCalendarModalOpen: true
-            });
-          }
-        })
-        // No permission to add the reminder
-        .catch();
-    };
+    const { isEventInCalendar } = this.state;
+
+    const onPressHandler =
+      calendarEvent && isEventInCalendar
+        ? // Create an action to remove the event from the calendar
+          () =>
+            checkAndRequestPermission()
+              .then(hasPermission => {
+                if (hasPermission) {
+                  this.removeReminderFromCalendar(calendarEvent);
+                }
+              }) // No permission to add the reminder
+              .catch()
+        : // Create an action that open the Calendar to let the user add an event
+          // Check the autorization status
+          () =>
+            checkAndRequestPermission()
+              .then(hasPermission => {
+                if (hasPermission) {
+                  this.setState({
+                    isSelectCalendarModalOpen: true
+                  });
+                }
+              })
+              // No permission to add the reminder
+              .catch();
 
     return (
       <View style={styles.reminderContainer}>
@@ -120,12 +136,14 @@ class MessageCTABar extends React.PureComponent<Props, State> {
         />
 
         <View style={styles.reminderButtonContainer}>
-          <Button
-            block={true}
-            bordered={true}
-            onPress={onPressHandler}
-            disabled={this.state.isEventInCalendar}
-          >
+          <Button block={true} bordered={true} onPress={onPressHandler}>
+            <Icon
+              name={
+                isEventInCalendar
+                  ? "remove-circle-outline"
+                  : "add-circle-outline"
+              }
+            />
             <Text>{I18n.t("messages.cta.reminder")}</Text>
           </Button>
         </View>
@@ -203,7 +221,13 @@ class MessageCTABar extends React.PureComponent<Props, State> {
   }
 
   public render() {
-    const { message, service, containerStyle, paymentByRptId } = this.props;
+    const {
+      message,
+      service,
+      containerStyle,
+      paymentByRptId,
+      calendarEvent
+    } = this.props;
     const { isSelectCalendarModalOpen } = this.state;
 
     const { due_date, payment_data } = message.content;
@@ -222,7 +246,7 @@ class MessageCTABar extends React.PureComponent<Props, State> {
                   header={SelectCalendarModalHeader}
                 />
               )}
-              {this.renderReminderCTA(due_date)}
+              {this.renderReminderCTA(due_date, calendarEvent)}
             </React.Fragment>
           )}
 
@@ -260,6 +284,19 @@ class MessageCTABar extends React.PureComponent<Props, State> {
         }
       })
       .catch();
+  };
+
+  private removeReminderFromCalendar = (calendarEvent: CalendarEvent) => {
+    RNCalendarEvents.removeEvent(calendarEvent.eventId)
+      .then(_ => {
+        showToast(I18n.t("messages.cta.reminderRemoveSuccess"), "success");
+        this.props.dispatch(
+          removeCalendarEvent({ messageId: calendarEvent.messageId })
+        );
+      })
+      .catch(_ =>
+        showToast(I18n.t("messages.cta.reminderRemoveFailure"), "danger")
+      );
   };
 
   private addReminderToCalendar = (
