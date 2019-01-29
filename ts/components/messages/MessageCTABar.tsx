@@ -138,11 +138,7 @@ class MessageCTABar extends React.PureComponent<Props, State> {
         <View style={styles.reminderButtonContainer}>
           <Button block={true} bordered={true} onPress={onPressHandler}>
             <Icon
-              name={
-                isEventInCalendar
-                  ? "remove-circle-outline"
-                  : "add-circle-outline"
-              }
+              name={calendarEvent && isEventInCalendar ? "minus" : "plus"}
             />
             <Text>{I18n.t("messages.cta.reminder")}</Text>
           </Button>
