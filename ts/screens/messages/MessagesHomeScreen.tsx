@@ -5,6 +5,7 @@ import { NavigationScreenProps } from "react-navigation";
 import { connect } from "react-redux";
 
 import Inbox from "../../components/messages/Inbox";
+import MessagesDeadlines from "../../components/messages/MessagesDeadlines";
 import TopScreenComponent from "../../components/screens/TopScreenComponent";
 import I18n from "../../i18n";
 import {
@@ -72,7 +73,11 @@ class MessagesHomeScreen extends React.Component<Props, never> {
             />
           </Tab>
           <Tab heading={I18n.t("messages.tab.deadlines")}>
-            <Deadlines messagesStateInfo={lexicallyOrderedMessagesStateInfo} />
+            <MessagesDeadlines
+              messagesStateInfo={lexicallyOrderedMessagesStateInfo}
+              refreshMessages={this.refreshMessages}
+              onPressItem={this.handleMessagePress}
+            />
           </Tab>
           <Tab heading={I18n.t("messages.tab.archive")} />
         </Tabs>
