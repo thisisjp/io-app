@@ -71,6 +71,9 @@ class MessagesHomeScreen extends React.Component<Props, never> {
               onPressItem={this.handleMessagePress}
             />
           </Tab>
+          <Tab heading={I18n.t("messages.tab.deadlines")}>
+            <Deadlines messagesStateInfo={lexicallyOrderedMessagesStateInfo} />
+          </Tab>
           <Tab heading={I18n.t("messages.tab.archive")} />
         </Tabs>
       </TopScreenComponent>
