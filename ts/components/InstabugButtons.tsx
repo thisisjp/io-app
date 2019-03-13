@@ -1,6 +1,7 @@
 import Instabug, { invocationMode } from "instabug-reactnative";
 import * as React from "react";
 import { StyleSheet, TouchableHighlight } from "react-native";
+import { Button } from "native-base";
 import { connect } from "react-redux";
 
 import { GlobalState } from "../store/reducers/types";
@@ -32,18 +33,12 @@ class InstabugButtonsComponent extends React.PureComponent<Props, {}> {
     return (
       this.props.isDebugModeEnabled && (
         <React.Fragment>
-          <TouchableHighlight
-            onPress={this.handleIBChatPress}
-            style={styles.button}
-          >
+          <Button transparent={true} onPress={this.handleIBChatPress}>
             <IconFont name="io-chat" color={this.props.color} />
-          </TouchableHighlight>
-          <TouchableHighlight
-            onPress={this.handleIBBugPress}
-            style={styles.button}
-          >
+          </Button>
+          <Button transparent={true} onPress={this.handleIBBugPress}>
             <IconFont name="io-bug" color={this.props.color} />
-          </TouchableHighlight>
+          </Button>
         </React.Fragment>
       )
     );

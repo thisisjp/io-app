@@ -20,36 +20,49 @@ export default (): Theme => {
           color: variables.textColor
         },
         padding: 0,
-        justifyContent: "center",
-        width: variables.iconSizeBase * 2
+        justifyContent: "center"
       },
+
+      minWidth: variables.headerButtonMinWidth,
       paddingLeft: 0,
-      marginLeft: -((variables.iconSizeBase * 3) / 4),
-      flex: 0.17
+      flex: 0,
+      marginRight: 10
     },
 
     "NativeBase.Body": {
+      "NativeBase.Button": {
+        alignSelf: "flex-start",
+        minWidth: variables.headerButtonMinWidth
+      },
       "NativeBase.Text": {
         ...makeFontStyleObject(Platform.select, variables.headerBodyFontWeight),
         backgroundColor: "transparent",
         color: variables.toolbarTextColor,
         fontSize: variables.headerBodyFontSize
-      },
+      }
+    },
+
+    "NativeBase.Right": {
+      flex: 0,
       marginLeft: 10
     },
 
     ".primary": {
       backgroundColor: variables.contentPrimaryBackground,
       "NativeBase.Right": {
-        "UIComponent.IconFont": {
-          color: variables.brandPrimaryInverted
+        "NativeBase.Button": {
+          "UIComponent.IconFont": {
+            color: variables.brandPrimaryInverted
+          },
+
+          minWidth: variables.headerButtonMinWidth
         }
       }
     },
 
     borderBottomWidth: variables.headerBorderBottomWidth,
     elevation: 0,
-    paddingHorizontal: variables.headerPaddingHorizontal,
+    paddingHorizontal: variables.headerPaddingHorizontal / 2,
     shadowColor: undefined,
     shadowOffset: undefined,
     shadowOpacity: undefined,
