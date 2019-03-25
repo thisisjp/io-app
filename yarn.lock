@@ -4097,9 +4097,10 @@ inquirer@^3.0.6:
     strip-ansi "^4.0.0"
     through "^2.3.6"
 
-instabug-reactnative@^8.0.14:
-  version "8.0.14"
-  resolved "https://registry.yarnpkg.com/instabug-reactnative/-/instabug-reactnative-8.0.14.tgz#c48fb976ddaa6772c95f81b24a81596ccb5e218f"
+instabug-reactnative@^8.1.6:
+  version "8.1.6"
+  resolved "https://registry.yarnpkg.com/instabug-reactnative/-/instabug-reactnative-8.1.6.tgz#08c38c0aeffdc91ad458048f7933b29ed5ec4363"
+  integrity sha512-4sOfisg9P0wNVs9wP7djvI5+LhHibCTjf74jBLdCpJpiOHvPiGFs0bXyk2vJaSRCW97D6ffnKJoMC4S9c7voWg==
 
 invariant@2.2.4, invariant@^2.2.2, invariant@^2.2.4:
   version "2.2.4"
@@ -6845,13 +6846,12 @@ react-native-calendar-events@1.6.4:
   resolved "https://registry.yarnpkg.com/react-native-calendar-events/-/react-native-calendar-events-1.6.4.tgz#e1ccfe50e48b385a00847c41f9fb2a97e756e72e"
   integrity sha512-By4lgWQG9eewS9WzhzxVHAewxX40v1CzLnNYXFMOqF06fYVCNykiiTMGlLzz3UXHVwwN1Drxw9uWroQfGRFMsw==
 
-react-native-camera@1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/react-native-camera/-/react-native-camera-1.2.0.tgz#fa93b39726d15bdbb02fac06f4a23957b0be403a"
-  integrity sha512-LGYvSRtnjV43X75vaHM8KYXvMzIcFav1DsOXY4S6WLBZcyg9SD9MPE/etVCup+33BlNcE8yqd3r/cM4aCH0PcA==
+react-native-camera@1.13.1:
+  version "1.13.1"
+  resolved "https://registry.yarnpkg.com/react-native-camera/-/react-native-camera-1.13.1.tgz#19277ccae0a49dbf1b96049da5b95c847ea7aff2"
+  integrity sha512-wYjMi06ygYIiHRM4dSCH914xFUay7Wplx0bAej4iBkZeh54M4AxJDcF4vVZ5vdkpuAg8zvof3l+L1VhcKziMgw==
   dependencies:
-    lodash "^4.17.4"
-    prop-types "^15.5.10"
+    prop-types "^15.6.2"
 
 react-native-config@0.11.7:
   version "0.11.7"

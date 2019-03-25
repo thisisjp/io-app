@@ -55,6 +55,8 @@ target 'ItaliaApp' do
 
   pod 'RNFS', :path => '../node_modules/react-native-fs'
 
+  pod 'instabug-reactnative', :path => '../node_modules/instabug-reactnative'
+
 end
 
 # Fix a open bug in react-native-config
