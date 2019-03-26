@@ -2,36 +2,31 @@
  * A screen where the user can choose to login with SPID or get more informations.
  * It includes a carousel with highlights on the app functionalities
  */
-
-import { Button, Content, Text, View } from "native-base";
+import { Button, Content, Switch, Text, View } from "native-base";
 import * as React from "react";
 import { NavigationScreenProp, NavigationState } from "react-navigation";
 import { connect } from "react-redux";
 
+import { DevScreenButton } from "../../components/DevScreenButton";
 import { HorizontalScroll } from "../../components/HorizontalScroll";
 import { LandingCardComponent } from "../../components/LandingCard";
 import BaseScreenComponent from "../../components/screens/BaseScreenComponent";
 import IconFont from "../../components/ui/IconFont";
-
 import { isDevEnvironment } from "../../config";
-
 import I18n from "../../i18n";
-
 import ROUTES from "../../navigation/routes";
-
+import { devicePreferencesSetUseBiometricIfAvailable } from "../../store/actions/devicePreferences";
 import { ReduxProps } from "../../store/actions/types";
-
+import { devicePreferencesSelector } from "../../store/reducers/filesystem/devicePreferences";
+import { GlobalState } from "../../store/reducers/types";
 import variables from "../../theme/variables";
-
 import { ComponentProps } from "../../types/react";
-
-import { DevScreenButton } from "../../components/DevScreenButton";
 
 type OwnProps = {
   navigation: NavigationScreenProp<NavigationState>;
 };
 
-type Props = ReduxProps & OwnProps;
+type Props = ReturnType<typeof mapStatetoProps> & ReduxProps & OwnProps;
 
 const cardProps: ReadonlyArray<ComponentProps<typeof LandingCardComponent>> = [
   {
@@ -86,6 +81,17 @@ const LandingScreen: React.SFC<Props> = props => {
         <View spacer={true} large={true} />
         <HorizontalScroll cards={cardComponents} />
         <View spacer={true} />
+        <Text>Disable use biometric if available</Text>
+        <Switch
+          value={props.devicePreferences.useBiometricIfAvailable}
+          onValueChange={() =>
+            props.dispatch(
+              devicePreferencesSetUseBiometricIfAvailable(
+                !props.devicePreferences.useBiometricIfAvailable
+              )
+            )
+          }
+        />
       </Content>
 
       <View footer={true}>
@@ -113,4 +119,8 @@ const LandingScreen: React.SFC<Props> = props => {
   );
 };
 
-export default connect()(LandingScreen);
+const mapStatetoProps = (state: GlobalState) => ({
+  devicePreferences: devicePreferencesSelector(state)
+});
+
+export default connect(mapStatetoProps)(LandingScreen);

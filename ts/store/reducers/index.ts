@@ -1,9 +1,11 @@
 /**
  * Aggregates all defined reducers
  */
+import RNFS from "react-native-fs";
 import { reducer as networkReducer } from "react-native-offline";
 import { combineReducers, Reducer } from "redux";
 import { PersistConfig, persistReducer, purgeStoredState } from "redux-persist";
+import FSStorage from "redux-persist-fs-storage";
 import { isActionOf } from "typesafe-actions";
 
 import { forgetCurrentSession, logoutSuccess } from "../actions/authentication";
@@ -16,6 +18,7 @@ import contentReducer from "./content";
 import { debugReducer } from "./debug";
 import deepLinkReducer from "./deepLink";
 import entitiesReducer from "./entities";
+import filesystemReducer, { FilesystemState } from "./filesystem";
 import identificationReducer from "./identification";
 import navigationReducer from "./navigation";
 import navigationHistoryReducer from "./navigationHistory";
@@ -27,11 +30,20 @@ import profileReducer from "./profile";
 import { GlobalState } from "./types";
 import walletReducer from "./wallet";
 
+console.log("Dir", RNFS.ExternalStorageDirectoryPath);
+
 // A custom configuration to store the authentication into the Keychain
 export const authenticationPersistConfig: PersistConfig = {
   key: "authentication",
   storage: createSecureStorage(),
   blacklist: ["deepLink"]
+};
+
+export const filesystemPersistConfig: PersistConfig = {
+  // The redux-persist default is `persist:` which doesn't work with some file systems
+  keyPrefix: "",
+  key: "filesystem",
+  storage: FSStorage(RNFS.ExternalDirectoryPath)
 };
 
 /**
@@ -71,6 +83,12 @@ const appReducer: Reducer<GlobalState, Action> = combineReducers<
   authentication: persistReducer<AuthenticationState, Action>(
     authenticationPersistConfig,
     authenticationReducer
+  ),
+
+  // filesystem persisted state
+  filesystem: persistReducer<FilesystemState, Action>(
+    filesystemPersistConfig,
+    filesystemReducer
   ),
 
   // standard persistor, see configureStoreAndPersistor.ts

@@ -9,6 +9,7 @@ import { ContentState } from "./content";
 import { DebugState } from "./debug";
 import { DeepLinkState } from "./deepLink";
 import { EntitiesState } from "./entities";
+import { PersistedFilesystemState } from "./filesystem";
 import { IdentificationState } from "./identification";
 import { NavigationHistoryState } from "./navigationHistory";
 import { NotificationsState } from "./notifications";
@@ -41,6 +42,7 @@ export type GlobalState = Readonly<{
   navigationHistory: NavigationHistoryState;
   identification: IdentificationState;
   debug: DebugState;
+  filesystem: PersistedFilesystemState;
 }>;
 
 export type PersistedGlobalState = GlobalState & PersistPartial;

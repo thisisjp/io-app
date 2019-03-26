@@ -17,6 +17,7 @@ import { CalendarEventsActions } from "./calendarEvents";
 import { ContentActions } from "./content";
 import { DebugActions } from "./debug";
 import { DeepLinkActions } from "./deepLink";
+import { DevicePreferencesActions } from "./devicePreferences";
 import { IdentificationActions } from "./identification";
 import { MessagesActions } from "./messages";
 import { NavigationActions } from "./navigation";
@@ -50,7 +51,8 @@ export type Action =
   | NavigationHistoryActions
   | IdentificationActions
   | DebugActions
-  | CalendarEventsActions;
+  | CalendarEventsActions
+  | DevicePreferencesActions;
 
 export type Dispatch = DispatchAPI<Action>;
 
