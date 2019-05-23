@@ -156,7 +156,7 @@ class ManualDataInsertionScreen extends React.Component<Props, State> {
                   .map(isRight)
                   .getOrElse(false)}
               >
-                <Label>{I18n.t("wallet.insertManually.noticeCode")}</Label>
+                <Label><Text>{I18n.t("wallet.insertManually.noticeCode")}</Text></Label>
                 <Input
                   keyboardType={"numeric"}
                   maxLength={18}
@@ -178,7 +178,7 @@ class ManualDataInsertionScreen extends React.Component<Props, State> {
                   .map(isRight)
                   .getOrElse(false)}
               >
-                <Label>{I18n.t("wallet.insertManually.entityCode")}</Label>
+                <Label><Text>{I18n.t("wallet.insertManually.entityCode")}</Text></Label>
                 <Input
                   keyboardType={"numeric"}
                   maxLength={11}
@@ -200,7 +200,7 @@ class ManualDataInsertionScreen extends React.Component<Props, State> {
                   .map(isRight)
                   .getOrElse(false)}
               >
-                <Label>{I18n.t("wallet.insertManually.amount")}</Label>
+                <Label><Text>{I18n.t("wallet.insertManually.amount")}</Text></Label>
                 <Input
                   keyboardType={"numeric"}
                   maxLength={10}
