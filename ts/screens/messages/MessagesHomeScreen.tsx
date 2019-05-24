@@ -11,7 +11,7 @@ import {
   View
 } from "native-base";
 import * as React from "react";
-import { StyleSheet } from "react-native";
+import { Animated, StyleSheet } from "react-native";
 import { NavigationScreenProps } from "react-navigation";
 import { connect } from "react-redux";
 import MessagesArchive from "../../components/messages/MessagesArchive";
@@ -41,6 +41,8 @@ type Props = NavigationScreenProps &
 type State = {
   searchText: Option<string>;
   debouncedSearchText: Option<string>;
+  animVal: Animated.Value;
+  scrollBarVal?: Animated.AnimatedInterpolation;
 };
 
 const styles = StyleSheet.create({
@@ -112,12 +114,26 @@ class MessagesHomeScreen extends React.Component<Props, State> {
     super(props);
     this.state = {
       searchText: none,
-      debouncedSearchText: none
+      debouncedSearchText: none,
+      animVal: new Animated.Value(0)
     };
   }
 
   public componentDidMount() {
+    console.log("MessageHomeScreen::DidMount");
+
     this.props.refreshMessages();
+
+    this.state.animVal.setValue(0);
+
+    this.setState({
+      scrollBarVal: this.state.animVal.interpolate({
+        inputRange: [0, 72 * 3],
+        outputRange: [0, 72],
+        extrapolate: "clamp"
+      })
+    });
+    console.log("MessageHomeScreen::DidMount.state", this.state.scrollBarVal);
   }
 
   private renderShadow = () => (
@@ -160,10 +176,13 @@ class MessagesHomeScreen extends React.Component<Props, State> {
         }
       >
         {!searchText.isSome() && (
-          <ScreenContentHeader
-            title={I18n.t("messages.contentTitle")}
-            icon={require("../../../img/icons/message-icon.png")}
-          />
+          <React.Fragment>
+            <ScreenContentHeader
+              title={I18n.t("messages.contentTitle")}
+              icon={require("../../../img/icons/message-icon.png")}
+              changingHeight={this.state.scrollBarVal || 0}
+            />
+          </React.Fragment>
         )}
 
         {searchText.isSome() ? this.renderSearch() : this.renderTabs()}
@@ -207,6 +226,15 @@ class MessagesHomeScreen extends React.Component<Props, State> {
             onRefresh={refreshMessages}
             setMessagesArchivedState={updateMessagesArchivedState}
             navigateToMessageDetail={navigateToMessageDetail}
+            animated={{
+              onScroll: Animated.event(
+                [{ nativeEvent: { contentOffset: { y: this.state.animVal } } }],
+                {
+                  useNativeDriver: true
+                }
+              ),
+              scrollEventThrottle: 16
+            }}
           />
         </Tab>
         {isExperimentalFeaturesEnabled && (

@@ -1,6 +1,6 @@
 import { H1, Text, View } from "native-base";
 import * as React from "react";
-import { ImageSourcePropType, StyleSheet } from "react-native";
+import { Animated, ImageSourcePropType, StyleSheet } from "react-native";
 
 import variables from "../../theme/variables";
 import ScreenHeader from "../ScreenHeader";
@@ -10,6 +10,7 @@ type Props = Readonly<{
   icon?: ImageSourcePropType;
   subtitle?: string;
   banner?: React.ReactNode;
+  changingHeight?: any;
 }>;
 
 const styles = StyleSheet.create({
@@ -27,27 +28,34 @@ const styles = StyleSheet.create({
 
 export class ScreenContentHeader extends React.PureComponent<Props> {
   public render() {
-    const { banner, subtitle } = this.props;
+    const { banner, changingHeight, subtitle } = this.props;
 
+    console.log("params.changingHeight", changingHeight);
     return (
-      <React.Fragment>
+      <View>
         {banner && <React.Fragment>{this.props.banner}</React.Fragment>}
-        <View spacer={true} />
-        <ScreenHeader
-          heading={
-            <H1 style={styles.screenHeaderHeading}>{this.props.title}</H1>
-          }
-          icon={this.props.icon}
-        />
-        {subtitle ? (
-          <View style={styles.subheaderContainer}>
-            <Text>{subtitle}</Text>
-            <View spacer={true} large={true} />
-          </View>
-        ) : (
+        <Animated.View
+          style={{
+            transform: [{ translateY: changingHeight || 0 }]
+          }}
+        >
           <View spacer={true} />
-        )}
-      </React.Fragment>
+          <ScreenHeader
+            heading={
+              <H1 style={styles.screenHeaderHeading}>{this.props.title}</H1>
+            }
+            icon={this.props.icon}
+          />
+          {subtitle ? (
+            <View style={styles.subheaderContainer}>
+              <Text>{subtitle}</Text>
+              <View spacer={true} large={true} />
+            </View>
+          ) : (
+            <View spacer={true} />
+          )}
+        </Animated.View>
+      </View>
     );
   }
 }

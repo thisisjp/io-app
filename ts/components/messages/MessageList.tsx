@@ -4,10 +4,13 @@ import * as pot from "italia-ts-commons/lib/pot";
 import { View } from "native-base";
 import React from "react";
 import {
+  Animated,
   FlatList,
   ListRenderItemInfo,
   RefreshControl,
-  StyleSheet
+  StyleSheet,
+  NativeSyntheticEvent,
+  NativeScrollEvent
 } from "react-native";
 import { NavigationEvents } from "react-navigation";
 import Placeholder from "rn-placeholder";
@@ -28,6 +31,10 @@ type ItemLayout = {
 };
 
 type OwnProps = {
+  animated?: {
+    onScroll: (_: NativeSyntheticEvent<NativeScrollEvent>) => void;
+    scrollEventThrottle?: number;
+  };
   messageStates: ReadonlyArray<MessageState>;
   servicesById: ServicesByIdState;
   paymentsByRptId: PaymentByRptIdState;
@@ -39,6 +46,7 @@ type OwnProps = {
   ListEmptyComponent?: React.ComponentProps<
     typeof FlatList
   >["ListEmptyComponent"];
+  onScroll?: (_: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
 
 type Props = OwnProps;
@@ -173,12 +181,20 @@ const MessageListItemPlaceholder = (
 
 const ItemSeparatorComponent = () => <View style={styles.itemSeparator} />;
 
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
+
 class MessageList extends React.Component<Props, State> {
-  private flatListRef = React.createRef<FlatList<MessageState>>();
+  private animatedFlatListRef = React.createRef<typeof AnimatedFlatList>();
 
   private scrollToTop = () => {
-    if (this.flatListRef.current && this.props.messageStates.length > 0) {
-      this.flatListRef.current.scrollToIndex({ animated: false, index: 0 });
+    if (
+      this.animatedFlatListRef.current &&
+      this.animatedFlatListRef.current.getNode() &&
+      this.props.messageStates.length > 0
+    ) {
+      this.animatedFlatListRef.current
+        .getNode()
+        .scrollToIndex({ animated: false, index: 0 });
     }
   };
 
@@ -285,6 +301,7 @@ class MessageList extends React.Component<Props, State> {
 
   public render() {
     const {
+      animated,
       messageStates,
       servicesById,
       refreshing,
@@ -300,18 +317,22 @@ class MessageList extends React.Component<Props, State> {
     return (
       <React.Fragment>
         <NavigationEvents onWillFocus={this.scrollToTop} />
-        <FlatList
-          ref={this.flatListRef}
+        <AnimatedFlatList
+          ref={this.animatedFlatListRef}
           scrollEnabled={true}
           data={messageStates}
           extraData={{ servicesById, paymentsByRptId }}
           keyExtractor={keyExtractor}
           refreshControl={refreshControl}
           initialNumToRender={10}
+          scrollEventThrottle={
+            animated ? animated.scrollEventThrottle : undefined
+          }
           ItemSeparatorComponent={ItemSeparatorComponent}
           ListEmptyComponent={ListEmptyComponent}
           renderItem={this.renderItem}
           getItemLayout={this.getItemLayout}
+          onScroll={animated ? animated.onScroll : undefined}
         />
       </React.Fragment>
     );
