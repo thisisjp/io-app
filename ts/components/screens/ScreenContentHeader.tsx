@@ -10,7 +10,7 @@ type Props = Readonly<{
   icon?: ImageSourcePropType;
   subtitle?: string;
   banner?: React.ReactNode;
-  changingHeight?: any;
+  animatedHeight?: Animated.AnimatedInterpolation;
 }>;
 
 const styles = StyleSheet.create({
@@ -28,16 +28,19 @@ const styles = StyleSheet.create({
 
 export class ScreenContentHeader extends React.PureComponent<Props> {
   public render() {
-    const { banner, changingHeight, subtitle } = this.props;
+    const { banner, animatedHeight, subtitle } = this.props;
 
-    console.log("params.changingHeight", changingHeight);
     return (
       <View>
         {banner && <React.Fragment>{this.props.banner}</React.Fragment>}
         <Animated.View
-          style={{
-            transform: [{ translateY: changingHeight || 0 }]
-          }}
+          style={
+            animatedHeight !== undefined
+              ? {
+                  height: animatedHeight
+                }
+              : { undefined }
+          }
         >
           <View spacer={true} />
           <ScreenHeader

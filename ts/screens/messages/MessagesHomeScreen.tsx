@@ -41,8 +41,8 @@ type Props = NavigationScreenProps &
 type State = {
   searchText: Option<string>;
   debouncedSearchText: Option<string>;
-  animVal: Animated.Value;
-  scrollBarVal?: Animated.AnimatedInterpolation;
+  animatedScrollPosition: Animated.Value;
+  interpolatedScrollPosition?: Animated.AnimatedInterpolation;
 };
 
 const styles = StyleSheet.create({
@@ -115,25 +115,24 @@ class MessagesHomeScreen extends React.Component<Props, State> {
     this.state = {
       searchText: none,
       debouncedSearchText: none,
-      animVal: new Animated.Value(0)
+      animatedScrollPosition: new Animated.Value(0)
     };
   }
 
   public componentDidMount() {
-    console.log("MessageHomeScreen::DidMount");
-
     this.props.refreshMessages();
 
-    this.state.animVal.setValue(0);
+    this.state.animatedScrollPosition.setValue(0);
 
     this.setState({
-      scrollBarVal: this.state.animVal.interpolate({
-        inputRange: [0, 72 * 3],
-        outputRange: [0, 72],
-        extrapolate: "clamp"
-      })
+      interpolatedScrollPosition: this.state.animatedScrollPosition.interpolate(
+        {
+          inputRange: [0, 72 * 3],
+          outputRange: [72, 0],
+          extrapolate: "clamp"
+        }
+      )
     });
-    console.log("MessageHomeScreen::DidMount.state", this.state.scrollBarVal);
   }
 
   private renderShadow = () => (
@@ -180,7 +179,7 @@ class MessagesHomeScreen extends React.Component<Props, State> {
             <ScreenContentHeader
               title={I18n.t("messages.contentTitle")}
               icon={require("../../../img/icons/message-icon.png")}
-              changingHeight={this.state.scrollBarVal || 0}
+              animatedHeight={this.state.interpolatedScrollPosition}
             />
           </React.Fragment>
         )}
@@ -227,12 +226,13 @@ class MessagesHomeScreen extends React.Component<Props, State> {
             setMessagesArchivedState={updateMessagesArchivedState}
             navigateToMessageDetail={navigateToMessageDetail}
             animated={{
-              onScroll: Animated.event(
-                [{ nativeEvent: { contentOffset: { y: this.state.animVal } } }],
+              onScroll: Animated.event([
                 {
-                  useNativeDriver: true
+                  nativeEvent: {
+                    contentOffset: { y: this.state.animatedScrollPosition }
+                  }
                 }
-              ),
+              ]),
               scrollEventThrottle: 16
             }}
           />
