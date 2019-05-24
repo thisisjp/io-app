@@ -41,8 +41,16 @@ type Props = NavigationScreenProps &
 type State = {
   searchText: Option<string>;
   debouncedSearchText: Option<string>;
-  animatedScrollPosition: Animated.Value;
-  interpolatedScrollPosition?: Animated.AnimatedInterpolation;
+  animatedScrollPosition: ReadonlyArray<Animated.Value>;
+  interpolatedScrollPosition?: ReadonlyArray<Animated.AnimatedInterpolation>;
+  currentTab: number;
+};
+
+const INITIAL_STATE = {
+  searchText: none,
+  debouncedSearchText: none,
+  animatedScrollPosition: [new Animated.Value(0), new Animated.Value(0)],
+  currentTab: 0
 };
 
 const styles = StyleSheet.create({
@@ -113,26 +121,19 @@ class MessagesHomeScreen extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      searchText: none,
-      debouncedSearchText: none,
-      animatedScrollPosition: new Animated.Value(0)
+      ...INITIAL_STATE,
+      interpolatedScrollPosition: INITIAL_STATE.animatedScrollPosition.map(p => {
+        return p.interpolate({
+          inputRange: [0, 72 * 3],
+          outputRange: [72, 0],
+          extrapolate: "clamp"
+        });
+      })
     };
   }
 
   public componentDidMount() {
     this.props.refreshMessages();
-
-    this.state.animatedScrollPosition.setValue(0);
-
-    this.setState({
-      interpolatedScrollPosition: this.state.animatedScrollPosition.interpolate(
-        {
-          inputRange: [0, 72 * 3],
-          outputRange: [72, 0],
-          extrapolate: "clamp"
-        }
-      )
-    });
   }
 
   private renderShadow = () => (
@@ -179,7 +180,11 @@ class MessagesHomeScreen extends React.Component<Props, State> {
             <ScreenContentHeader
               title={I18n.t("messages.contentTitle")}
               icon={require("../../../img/icons/message-icon.png")}
-              animatedHeight={this.state.interpolatedScrollPosition}
+              animatedHeight={
+                this.state.interpolatedScrollPosition
+                  ? this.state.interpolatedScrollPosition[this.state.currentTab]
+                  : undefined
+              }
             />
           </React.Fragment>
         )}
@@ -207,6 +212,10 @@ class MessagesHomeScreen extends React.Component<Props, State> {
       <Tabs
         tabContainerStyle={[styles.tabBarContainer, styles.tabBarUnderline]}
         tabBarUnderlineStyle={styles.tabBarUnderlineActive}
+        onChangeTab={(evt: any) => {
+          this.setState({ currentTab: evt.i });
+        }}
+        initialPage={0}
       >
         <Tab
           heading={
@@ -229,7 +238,7 @@ class MessagesHomeScreen extends React.Component<Props, State> {
               onScroll: Animated.event([
                 {
                   nativeEvent: {
-                    contentOffset: { y: this.state.animatedScrollPosition }
+                    contentOffset: { y: this.state.animatedScrollPosition[0] }
                   }
                 }
               ]),
@@ -275,6 +284,16 @@ class MessagesHomeScreen extends React.Component<Props, State> {
             onRefresh={refreshMessages}
             setMessagesArchivedState={updateMessagesArchivedState}
             navigateToMessageDetail={navigateToMessageDetail}
+            animated={{
+              onScroll: Animated.event([
+                {
+                  nativeEvent: {
+                    contentOffset: { y: this.state.animatedScrollPosition[1] }
+                  }
+                }
+              ]),
+              scrollEventThrottle: 16
+            }}
           />
         </Tab>
       </Tabs>

@@ -58,10 +58,13 @@ type OwnProps = {
   ) => void;
 };
 
-type Props = Pick<
-  ComponentProps<typeof MessageList>,
-  "servicesById" | "paymentsByRptId" | "onRefresh"
-> &
+type MessageListProps =
+  | "servicesById"
+  | "paymentsByRptId"
+  | "onRefresh"
+  | "animated";
+
+type Props = Pick<ComponentProps<typeof MessageList>, MessageListProps> &
   OwnProps &
   InjectedWithMessagesSelectionProps;
 
@@ -138,7 +141,7 @@ class MessagesArchive extends React.PureComponent<Props, State> {
 
   public render() {
     const isLoading = pot.isLoading(this.props.messagesState);
-    const { selectedMessageIds, resetSelection } = this.props;
+    const { animated, selectedMessageIds, resetSelection } = this.props;
 
     return (
       <View style={styles.listWrapper}>
@@ -171,6 +174,7 @@ class MessagesArchive extends React.PureComponent<Props, State> {
           refreshing={isLoading}
           selectedMessageIds={selectedMessageIds}
           ListEmptyComponent={ListEmptyComponent}
+          animated={animated}
         />
       </View>
     );
