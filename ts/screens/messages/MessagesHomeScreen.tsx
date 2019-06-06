@@ -33,15 +33,11 @@ type Props = NavigationScreenProps &
   ReturnType<typeof mapDispatchToProps>;
 
 type State = {
-  animatedScrollPosition: ReadonlyArray<Animated.Value>;
-  interpolatedScrollPosition?: ReadonlyArray<Animated.AnimatedInterpolation>;
   currentTab: number;
 };
 
-const INITIAL_STATE = {
-  animatedScrollPosition: [new Animated.Value(0), new Animated.Value(0)],
-  currentTab: 0
-};
+// Scroll range is directly influenced by floating header height
+const SCROLL_RANGE_FOR_ANIMATION = 72;
 
 const styles = StyleSheet.create({
   tabBarContainer: {
@@ -86,6 +82,7 @@ const styles = StyleSheet.create({
   }
 });
 
+const AnimatedTabs = Animated.createAnimatedComponent(Tabs);
 /**
  * A screen that contains all the Tabs related to messages.
  */
@@ -93,16 +90,15 @@ class MessagesHomeScreen extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      ...INITIAL_STATE,
-      interpolatedScrollPosition: INITIAL_STATE.animatedScrollPosition.map(p => {
-        return p.interpolate({
-          inputRange: [0, 72 * 3],
-          outputRange: [72, 0],
-          extrapolate: "clamp"
-        });
-      })
+      currentTab: 0
     };
   }
+
+  public animatedScrollPositions: ReadonlyArray<Animated.Value> = [
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0)
+  ];
 
   public componentDidMount() {
     this.props.refreshMessages();
@@ -124,17 +120,16 @@ class MessagesHomeScreen extends React.Component<Props, State> {
         appLogo={true}
       >
         {!isSearchEnabled && (
-          <ScreenContentHeader
-            title={I18n.t("messages.contentTitle")}
-            icon={require("../../../img/icons/message-icon.png")}
-            animatedHeight={
-              this.state.interpolatedScrollPosition
-                ? this.state.interpolatedScrollPosition[this.state.currentTab]
-                : undefined
-            }
-          />
+          <React.Fragment>
+            <ScreenContentHeader
+              title={I18n.t("messages.contentTitle")}
+              icon={require("../../../img/icons/message-icon.png")}
+              fixed={true}
+            />
+            {this.renderTabs()}
+          </React.Fragment>
         )}
-        {isSearchEnabled ? this.renderSearch() : this.renderTabs()}
+        {isSearchEnabled && this.renderSearch()}
       </TopScreenComponent>
     );
   }
@@ -154,13 +149,34 @@ class MessagesHomeScreen extends React.Component<Props, State> {
     } = this.props;
 
     return (
-      <Tabs
+      <AnimatedTabs
         tabContainerStyle={[styles.tabBarContainer, styles.tabBarUnderline]}
         tabBarUnderlineStyle={styles.tabBarUnderlineActive}
         onChangeTab={(evt: any) => {
           this.setState({ currentTab: evt.i });
         }}
         initialPage={0}
+        style={{
+          transform: [
+            {
+              translateY: this.animatedScrollPositions[
+                this.state.currentTab
+              ].interpolate({
+                inputRange: [
+                  0,
+                  SCROLL_RANGE_FOR_ANIMATION / 2,
+                  SCROLL_RANGE_FOR_ANIMATION
+                ],
+                outputRange: [
+                  SCROLL_RANGE_FOR_ANIMATION,
+                  SCROLL_RANGE_FOR_ANIMATION / 4,
+                  0
+                ],
+                extrapolate: "clamp"
+              })
+            }
+          ]
+        }}
       >
         <Tab
           heading={
@@ -180,14 +196,19 @@ class MessagesHomeScreen extends React.Component<Props, State> {
             setMessagesArchivedState={updateMessagesArchivedState}
             navigateToMessageDetail={navigateToMessageDetail}
             animated={{
-              onScroll: Animated.event([
-                {
-                  nativeEvent: {
-                    contentOffset: { y: this.state.animatedScrollPosition[0] }
+              onScroll: Animated.event(
+                [
+                  {
+                    nativeEvent: {
+                      contentOffset: {
+                        y: this.animatedScrollPositions[0]
+                      }
+                    }
                   }
-                }
-              ]),
-              scrollEventThrottle: 16
+                ],
+                { useNativeDriver: true }
+              ),
+              scrollEventThrottle: 8 // target is 120fps
             }}
           />
         </Tab>
@@ -230,18 +251,23 @@ class MessagesHomeScreen extends React.Component<Props, State> {
             setMessagesArchivedState={updateMessagesArchivedState}
             navigateToMessageDetail={navigateToMessageDetail}
             animated={{
-              onScroll: Animated.event([
-                {
-                  nativeEvent: {
-                    contentOffset: { y: this.state.animatedScrollPosition[1] }
+              onScroll: Animated.event(
+                [
+                  {
+                    nativeEvent: {
+                      contentOffset: {
+                        y: this.animatedScrollPositions[2]
+                      }
+                    }
                   }
-                }
-              ]),
-              scrollEventThrottle: 16
+                ],
+                { useNativeDriver: true }
+              ),
+              scrollEventThrottle: 8 // target is 120fps
             }}
           />
         </Tab>
-      </Tabs>
+      </AnimatedTabs>
     );
   };
 

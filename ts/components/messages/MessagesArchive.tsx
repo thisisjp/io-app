@@ -85,6 +85,7 @@ const ListEmptyComponent = (
     <Text style={styles.emptyListContentSubtitle}>
       {I18n.t("messages.archive.emptyMessage.subtitle")}
     </Text>
+    <View spacer={true} extralarge={true} />
   </View>
 );
 

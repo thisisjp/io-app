@@ -1,16 +1,16 @@
 import { H1, Text, View } from "native-base";
 import * as React from "react";
-import { Animated, ImageSourcePropType, StyleSheet } from "react-native";
+import { ImageSourcePropType, StyleSheet } from "react-native";
+import { getStatusBarHeight } from "react-native-iphone-x-helper";
 
 import variables from "../../theme/variables";
 import ScreenHeader from "../ScreenHeader";
-
 type Props = Readonly<{
   title: string;
   icon?: ImageSourcePropType;
   subtitle?: string;
   banner?: React.ReactNode;
-  animatedHeight?: Animated.AnimatedInterpolation;
+  fixed?: boolean;
 }>;
 
 const styles = StyleSheet.create({
@@ -23,25 +23,23 @@ const styles = StyleSheet.create({
     fontSize: variables.fontSize4,
     lineHeight: 40,
     marginRight: variables.contentPadding
+  },
+  fixedPosition: {
+    position: "absolute",
+    top: variables.appHeaderHeight + getStatusBarHeight(true),
+    right: 0,
+    left: 0
   }
 });
 
 export class ScreenContentHeader extends React.PureComponent<Props> {
   public render() {
-    const { banner, animatedHeight, subtitle } = this.props;
+    const { banner, subtitle, fixed } = this.props;
 
     return (
-      <View>
+      <View style={fixed ? styles.fixedPosition : {}}>
         {banner && <React.Fragment>{this.props.banner}</React.Fragment>}
-        <Animated.View
-          style={
-            animatedHeight !== undefined
-              ? {
-                  height: animatedHeight
-                }
-              : { undefined }
-          }
-        >
+        <View>
           <View spacer={true} />
           <ScreenHeader
             heading={
@@ -57,7 +55,7 @@ export class ScreenContentHeader extends React.PureComponent<Props> {
           ) : (
             <View spacer={true} />
           )}
-        </Animated.View>
+        </View>
       </View>
     );
   }
