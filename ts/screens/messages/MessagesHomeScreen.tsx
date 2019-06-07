@@ -210,6 +210,7 @@ class MessagesHomeScreen extends React.Component<Props, State> {
               ),
               scrollEventThrottle: 8 // target is 120fps
             }}
+            paddingForAnimation={true}
           />
         </Tab>
         {isExperimentalFeaturesEnabled && (
@@ -265,6 +266,7 @@ class MessagesHomeScreen extends React.Component<Props, State> {
               ),
               scrollEventThrottle: 8 // target is 120fps
             }}
+            paddingForAnimation={true}
           />
         </Tab>
       </AnimatedTabs>

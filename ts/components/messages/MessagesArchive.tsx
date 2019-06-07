@@ -46,6 +46,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingTop: customVariables.contentPadding,
     fontSize: customVariables.fontSizeSmall
+  },
+  paddingForAnimation:{ 
+    height: 55
   }
 });
 
@@ -56,6 +59,7 @@ type OwnProps = {
     ids: ReadonlyArray<string>,
     archived: boolean
   ) => void;
+  paddingForAnimation: boolean;
 };
 
 type MessageListProps =
@@ -73,7 +77,7 @@ type State = {
   filteredMessageStates: ReturnType<typeof generateMessagesStateArchivedArray>;
 };
 
-const ListEmptyComponent = (
+const ListEmptyComponent = (paddingForAnimation: boolean) => (
   <View style={styles.emptyListWrapper}>
     <View spacer={true} />
     <Image
@@ -85,7 +89,7 @@ const ListEmptyComponent = (
     <Text style={styles.emptyListContentSubtitle}>
       {I18n.t("messages.archive.emptyMessage.subtitle")}
     </Text>
-    <View spacer={true} extralarge={true} />
+    {paddingForAnimation && <View style={styles.paddingForAnimation} />}
   </View>
 );
 
