@@ -211,6 +211,28 @@ class MessagesHomeScreen extends React.Component<Props, State> {
               scrollEventThrottle: 8 // target is 120fps
             }}
             paddingForAnimation={true}
+            AnimatedCTAStyle={{
+              transform: [
+                {
+                  translateY: this.animatedScrollPositions[
+                    this.state.currentTab
+                  ].interpolate({
+                    inputRange: [
+                      0,
+                      SCROLL_RANGE_FOR_ANIMATION / 2,
+                      SCROLL_RANGE_FOR_ANIMATION
+                    ],
+                    outputRange: [
+                      0,
+
+                      SCROLL_RANGE_FOR_ANIMATION * 0.75,
+                      SCROLL_RANGE_FOR_ANIMATION
+                    ],
+                    extrapolate: "clamp"
+                  })
+                }
+              ]
+            }}
           />
         </Tab>
         {isExperimentalFeaturesEnabled && (
@@ -257,7 +279,9 @@ class MessagesHomeScreen extends React.Component<Props, State> {
                   {
                     nativeEvent: {
                       contentOffset: {
-                        y: this.animatedScrollPositions[2]
+                        y: isExperimentalFeaturesEnabled
+                          ? this.animatedScrollPositions[2]
+                          : this.animatedScrollPositions[1]
                       }
                     }
                   }
@@ -267,6 +291,28 @@ class MessagesHomeScreen extends React.Component<Props, State> {
               scrollEventThrottle: 8 // target is 120fps
             }}
             paddingForAnimation={true}
+            AnimatedCTAStyle={{
+              transform: [
+                {
+                  translateY: this.animatedScrollPositions[
+                    this.state.currentTab
+                  ].interpolate({
+                    inputRange: [
+                      0,
+                      SCROLL_RANGE_FOR_ANIMATION / 2,
+                      SCROLL_RANGE_FOR_ANIMATION
+                    ],
+                    outputRange: [
+                      0,
+
+                      SCROLL_RANGE_FOR_ANIMATION * 0.75,
+                      SCROLL_RANGE_FOR_ANIMATION
+                    ],
+                    extrapolate: "clamp"
+                  })
+                }
+              ]
+            }}
           />
         </Tab>
       </AnimatedTabs>

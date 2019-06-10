@@ -1,7 +1,7 @@
 import * as pot from "italia-ts-commons/lib/pot";
 import { Button, Text, View } from "native-base";
 import React, { ComponentProps } from "react";
-import { Image, StyleSheet } from "react-native";
+import { Animated, Image, StyleSheet } from "react-native";
 
 import I18n from "../../i18n";
 import { lexicallyOrderedMessagesStateSelector } from "../../store/reducers/entities/messages";
@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: 72,
     flexDirection: "row",
     zIndex: 1,
     justifyContent: "space-around",
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     paddingTop: customVariables.contentPadding,
     fontSize: customVariables.fontSizeSmall
   },
-  paddingForAnimation:{ 
+  paddingForAnimation: {
     height: 55
   }
 });
@@ -60,7 +60,13 @@ type OwnProps = {
     ids: ReadonlyArray<string>,
     archived: boolean
   ) => void;
+};
+
+type AnimationProps = {
+  // paddingForAnimation has value equal to screen header. It is necessary
+  // because header has absolute position
   paddingForAnimation: boolean;
+  AnimatedCTAStyle?: any;
 };
 
 type MessageListProps =
@@ -68,8 +74,10 @@ type MessageListProps =
   | "paymentsByRptId"
   | "onRefresh"
   | "animated";
+
 type Props = Pick<ComponentProps<typeof MessageList>, MessageListProps> &
   OwnProps &
+  AnimationProps &
   InjectedWithMessagesSelectionProps;
 
 type State = {
@@ -92,7 +100,7 @@ const generateMessagesStateNotArchivedArray = (
     []
   );
 
-const ListEmptyComponent =(paddingForAnimation: boolean) => (
+const ListEmptyComponent = (paddingForAnimation: boolean) => (
   <View style={styles.emptyListWrapper}>
     <View spacer={true} />
     <Image
@@ -148,12 +156,17 @@ class MessagesInbox extends React.PureComponent<Props, State> {
 
   public render() {
     const isLoading = pot.isLoading(this.props.messagesState);
-    const { animated, selectedMessageIds, resetSelection } = this.props;
+    const {
+      animated,
+      AnimatedCTAStyle,
+      selectedMessageIds,
+      resetSelection
+    } = this.props;
 
     return (
       <View style={styles.listWrapper}>
         {selectedMessageIds.isSome() && (
-          <View style={styles.buttonBar}>
+          <Animated.View style={[styles.buttonBar, AnimatedCTAStyle]}>
             <Button
               block={true}
               bordered={true}
@@ -171,7 +184,7 @@ class MessagesInbox extends React.PureComponent<Props, State> {
             >
               <Text>{I18n.t("messages.cta.archive")}</Text>
             </Button>
-          </View>
+          </Animated.View>
         )}
         <MessageList
           {...this.props}
