@@ -161,7 +161,7 @@ type State = {
   some("READY") = readyAndNotStarted
   some("STARTED") = readyAndStarted
   */
-  animationStates: Option<string>;
+  isAnimationReadyAndRunning: Option<boolean>;
   scrollY: Animated.Value;
   itemLayouts: ReadonlyArray<ItemLayout>;
   prevSections?: Sections;
@@ -277,25 +277,31 @@ class MessageAgenda extends React.PureComponent<Props, State> {
   }
 
   public handleRelease() {
-    if (this.state.animationStates.getOrElse("") === "READY") {
-      // start animation
+    if (
+      this.state.isAnimationReadyAndRunning.isSome() &&
+      this.state.isAnimationReadyAndRunning.value === false
+    ) {
+      // Start animation
       this.animateOverScroll();
     }
   }
 
   private handleScroll(pullDownDistance: any) {
     if (pullDownDistance.value <= MIN_PULLDOWN_DISTANCE) {
-      if (this.state.animationStates.isNone()) {
-        return this.setState({ animationStates: some("READY") });
+      if (this.state.isAnimationReadyAndRunning.isNone()) {
+        return this.setState({ isAnimationReadyAndRunning: some(false) });
       }
     } else {
       this.animateCloseOverScroll();
-      return this.setState({ animationStates: none });
+      return this.setState({ isAnimationReadyAndRunning: none });
     }
   }
 
   private handleDragMove() {
-    if (this.state.animationStates.getOrElse("") === "READY") {
+    if (
+      this.state.isAnimationReadyAndRunning.isSome() &&
+      this.state.isAnimationReadyAndRunning.value === false
+    ) {
       this.animateOverScroll();
     }
     return true;
@@ -303,21 +309,24 @@ class MessageAgenda extends React.PureComponent<Props, State> {
 
   private animateOverScroll = () => {
     this.overScrollAnim.setValue(0);
-    this.setState({ animationStates: some("STARTED") });
+    this.setState({ isAnimationReadyAndRunning: some(true) });
     Animated.timing(this.overScrollAnim, {
       toValue: HEADER_SCROLL_DISTANCE,
-      duration: 50,
+      duration: 500,
       easing: Easing.linear,
       useNativeDriver: true
     }).start();
   };
 
   private animateCloseOverScroll = () => {
-    if (this.state.animationStates.getOrElse("") === "STARTED") {
-      this.setState({ animationStates: none });
+    if (
+      this.state.isAnimationReadyAndRunning.isSome() &&
+      this.state.isAnimationReadyAndRunning.value === true
+    ) {
+      this.setState({ isAnimationReadyAndRunning: none });
       Animated.timing(this.overScrollAnim, {
         toValue: 0,
-        duration: 50,
+        duration: 500,
         easing: Easing.linear,
         useNativeDriver: true
       }).start();
@@ -327,7 +336,7 @@ class MessageAgenda extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      animationStates: none,
+      isAnimationReadyAndRunning: none,
       scrollY: new Animated.Value(0),
       itemLayouts: []
     };
