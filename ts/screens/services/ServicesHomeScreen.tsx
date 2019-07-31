@@ -10,6 +10,8 @@ import {
 import { getStatusBarHeight, isIphoneX } from "react-native-iphone-x-helper";
 import { NavigationScreenProps } from "react-navigation";
 import { connect } from "react-redux";
+import { ServiceId } from "../../../definitions/backend/ServiceId";
+import { ServicePublic } from "../../../definitions/backend/ServicePublic";
 import { ChooserListContainer } from "../../components/ChooserListContainer";
 import ChooserListItem from "../../components/ChooserListItem";
 import { withLightModalContext } from "../../components/helpers/withLightModalContext";
@@ -17,20 +19,33 @@ import { withLoadingSpinner } from "../../components/helpers/withLoadingSpinner"
 import { ScreenContentHeader } from "../../components/screens/ScreenContentHeader";
 import TopScreenComponent from "../../components/screens/TopScreenComponent";
 import OrganizationLogo from "../../components/services/OrganizationLogo";
+import ServiceSectionListComponent from "../../components/services/ServiceSectionListComponent";
 import ServicesLocal from "../../components/services/ServicesLocal";
 import ServicesNational from "../../components/services/ServicesNational";
 import ServicesOther from "../../components/services/ServicesOther";
 import { LightModalContextInterface } from "../../components/ui/LightModal";
 import Markdown from "../../components/ui/Markdown";
 import I18n from "../../i18n";
-import { loadVisibleServices } from "../../store/actions/services";
+import { contentServiceLoad } from "../../store/actions/content";
+import { navigateToOldServiceDetailsScreen } from "../../store/actions/navigation";
+import {
+  loadVisibleServices,
+  showServiceDetails
+} from "../../store/actions/services";
 import { Dispatch } from "../../store/actions/types";
 import { lexicallyOrderedAllOrganizations } from "../../store/reducers/entities/organizations";
 import { Organization } from "../../store/reducers/entities/organizations/organizationsAll";
+import {
+  nationalServiceSectionsSelector,
+  serviceSectionsSelector
+} from "../../store/reducers/entities/services";
+import { readServicesSelector } from "../../store/reducers/entities/services/readStateByServiceId";
 import { GlobalState } from "../../store/reducers/types";
 import customVariables from "../../theme/variables";
+import { InferNavigationParams } from "../../types/react";
 import { getLogoForOrganization } from "../../utils/organizations";
 import { isTextIncludedCaseInsensitive } from "../../utils/strings";
+import OldServiceDetailsScreen from "../preferences/OldServiceDetailsScreen";
 
 type OwnProps = NavigationScreenProps;
 
@@ -184,6 +199,22 @@ class ServicesHomeScreen extends React.Component<Props, State> {
     );
   }
 
+  //
+  //
+  //TODO: it should be done before the list is rendered!
+  //
+  //
+  
+  private onServiceSelect = (service: ServicePublic) => {
+    // when a service gets selected, before navigating to the service detail
+    // screen, we issue a contentServiceLoad to refresh the service metadata
+    this.props.contentServiceLoad(service.service_id);
+    this.props.serviceDetailsLoad(service);
+    this.props.navigateToOldServiceDetailsScreen({
+      service
+    });
+  };
+
   /**
    * Render Locals, Nationals and Other services tabs.
    */
@@ -270,11 +301,11 @@ class ServicesHomeScreen extends React.Component<Props, State> {
         </Tab>
         <Tab
           heading={
-            <TabHeading>
-              <Text style={styles.tabBarContent}>
-                {I18n.t("services.tab.national")}
-              </Text>
-            </TabHeading>
+              <TabHeading>
+                <Text style={styles.tabBarContent}>
+                  {I18n.t("services.tab.national")}
+                </Text>
+              </TabHeading>
           }
         >
           <ServicesNational
@@ -315,6 +346,15 @@ class ServicesHomeScreen extends React.Component<Props, State> {
                 }
               ]
             }}
+          />
+          <ServiceSectionListComponent
+            sections={this.props.nationalSections}
+            profile={this.props.profile}
+            isRefreshing={this.props.isLoading}
+            onRefresh={this.props.refreshServices}
+            onSelect={this.onServiceSelect}
+            readServices={this.props.readServices}
+            isExperimentalFeaturesEnabled={true}
           />
         </Tab>
         <Tab
@@ -365,6 +405,15 @@ class ServicesHomeScreen extends React.Component<Props, State> {
               ]
             }}
           />
+          <ServiceSectionListComponent
+            sections={this.props.sections}
+            profile={this.props.profile}
+            isRefreshing={this.props.isLoading}
+            onRefresh={this.props.refreshServices}
+            onSelect={this.onServiceSelect}
+            readServices={this.props.readServices}
+            isExperimentalFeaturesEnabled={true}
+          />
         </Tab>
       </AnimatedTabs>
     );
@@ -385,12 +434,23 @@ const mapStateToProps = (state: GlobalState) => {
 
   return {
     allOrganizations: lexicallyOrderedAllOrganizations(state),
-    isLoading
+    isLoading,
+    nationalSections: nationalServiceSectionsSelector(state),
+    sections: serviceSectionsSelector(state),
+    profile: state.profile,
+    readServices: readServicesSelector(state)
   };
 };
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
-  refreshServices: () => dispatch(loadVisibleServices.request())
+  refreshServices: () => dispatch(loadVisibleServices.request()),
+  contentServiceLoad: (serviceId: ServiceId) =>
+    dispatch(contentServiceLoad.request(serviceId)),
+  serviceDetailsLoad: (service: ServicePublic) =>
+    dispatch(showServiceDetails(service)),
+  navigateToOldServiceDetailsScreen: (
+    params: InferNavigationParams<typeof OldServiceDetailsScreen>
+  ) => dispatch(navigateToOldServiceDetailsScreen(params))
 });
 
 export default connect(
