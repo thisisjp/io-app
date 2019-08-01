@@ -289,6 +289,10 @@ function* initializeApplicationSaga(): IterableIterator<Effect> {
     backendClient.getVisibleServices
   );
 
+  //TODO: implement loading of services content. 
+  // Until it is not implemented, goes under tab "other services" and manually access the detail of each service to load its content
+
+
   // Load messages when requested
   yield fork(watchMessagesLoadOrCancelSaga, backendClient.getMessages);
 
