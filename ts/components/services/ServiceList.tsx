@@ -35,18 +35,16 @@ class ServiceList extends React.Component<Props> {
     const { animated, ListEmptyComponent } = this.props;
 
     return (
-      <React.Fragment>
-        <AnimatedFlatList
-          ref={this.flatListRef}
-          scrollEnabled={true}
-          scrollEventThrottle={
-            animated ? animated.scrollEventThrottle : undefined
-          }
-          ListEmptyComponent={ListEmptyComponent}
-          renderItem={this.renderItem}
-          onScroll={animated ? animated.onScroll : undefined}
-        />
-      </React.Fragment>
+      <AnimatedFlatList
+        ref={this.flatListRef}
+        scrollEnabled={true}
+        scrollEventThrottle={
+          animated ? animated.scrollEventThrottle : undefined
+        }
+        ListEmptyComponent={ListEmptyComponent}
+        renderItem={this.renderItem}
+        onScroll={animated ? animated.onScroll : undefined}
+      />
     );
   }
 }

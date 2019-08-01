@@ -3,13 +3,18 @@
  */
 import * as pot from "italia-ts-commons/lib/pot";
 import { combineReducers } from "redux";
-
 import { createSelector } from "reselect";
+
+import { ServicePublic } from "../../../../../definitions/backend/ServicePublic";
+import { Service as ServiceMetadata } from "../../../../../definitions/content/Service";
 import { isDefined } from "../../../../utils/guards";
 import { Action } from "../../../actions/types";
-import { servicesMetadataSelector } from "../../content";
+import { ServiceMetadataById, servicesMetadataSelector } from "../../content";
 import { GlobalState } from "../../types";
-import { organizationNamesByFiscalCodeSelector } from "../organizations/organizationsByFiscalCodeReducer";
+import {
+  organizationNamesByFiscalCodeSelector,
+  OrganizationNamesByFiscalCodeState
+} from "../organizations/organizationsByFiscalCodeReducer";
 import readStateByServiceReducer, {
   ReadStateByServicesId
 } from "./readStateByServiceId";
@@ -42,62 +47,72 @@ export default reducer;
 // Selectors
 export const servicesSelector = (state: GlobalState) => state.entities.services;
 
+const getLocalizedServices = (
+  service: pot.Pot<ServicePublic, Error>,
+  servicesMetadataById: ServiceMetadataById,
+  localization?: "NATIONAL" | "LOCAL"
+) => {
+  if (localization) {
+    const id = pot.isSome(service) ? service.value.service_id : undefined;
+    if (id) {
+      const potServiceMetadata = servicesMetadataById[id] || pot.none;
+      const serviceMetadata: ServiceMetadata = pot.getOrElse(
+        potServiceMetadata,
+        {} as pot.PotType<typeof potServiceMetadata>
+      );
+
+      return serviceMetadata.scope === localization;
+    } else {
+      return undefined;
+    }
+  } else {
+    return true;
+  }
+};
+
+const getGenericServices = (
+  services: ServicesState,
+  organizations: OrganizationNamesByFiscalCodeState,
+  servicesMetadata: {
+    byId: ServiceMetadataById;
+  },
+  localization?: "NATIONAL" | "LOCAL"
+) => {
+  const orgfiscalCodes = Object.keys(services.byOrgFiscalCode);
+  return orgfiscalCodes
+    .map(fiscalCode => {
+      const organizationName = organizations[fiscalCode] || fiscalCode;
+      const organizationFiscalCode = fiscalCode;
+      const serviceIdsForOrg = services.byOrgFiscalCode[fiscalCode] || [];
+
+      const data = serviceIdsForOrg
+        .map(id => services.byId[id])
+        .filter(isDefined)
+        .filter(service =>
+          getLocalizedServices(service, servicesMetadata.byId, localization)
+        );
+      return {
+        organizationName,
+        organizationFiscalCode,
+        data
+      };
+    })
+    .filter(_ => _.data.length > 0)
+    .sort((a, b) =>
+      a.organizationName
+        .toLocaleLowerCase()
+        .localeCompare(b.organizationName.toLocaleLowerCase())
+    );
+};
+
 export const serviceSectionsSelector = createSelector(
-  [servicesSelector, organizationNamesByFiscalCodeSelector],
-  (services, organizations) => {
-    const orgfiscalCodes = Object.keys(services.byOrgFiscalCode);
-    return orgfiscalCodes
-      .map(fiscalCode => {
-        const organizationName = organizations[fiscalCode] || fiscalCode;
-        const organizationFiscalCode = fiscalCode;
-        const serviceIdsForOrg = services.byOrgFiscalCode[fiscalCode] || [];
-        const data = serviceIdsForOrg
-          .map(id => services.byId[id])
-          .filter(isDefined);
-        return {
-          organizationName,
-          organizationFiscalCode,
-          data
-        };
-      })
-      .filter(_ => _.data.length > 0)
-      .sort((a, b) =>
-        a.organizationName
-          .toLocaleLowerCase()
-          .localeCompare(b.organizationName.toLocaleLowerCase())
-      );
-  }
-);
-
-export const serviceSectionsSelector3 = createSelector(
-  [servicesSelector, organizationNamesByFiscalCodeSelector],
-  (services, organizations) => {
-    const orgfiscalCodes = Object.keys(services.byOrgFiscalCode);
-    return orgfiscalCodes
-      .map(fiscalCode => {
-        const organizationName = organizations[fiscalCode] || fiscalCode;
-        const organizationFiscalCode = fiscalCode;
-        const serviceIdsForOrg = services.byOrgFiscalCode[fiscalCode] || [];
-        const data = serviceIdsForOrg
-          .map(id => services.byId[id])
-          .filter(isDefined);
-
-        const hasNationalServices = true;
-
-        return {
-          organizationName,
-          organizationFiscalCode,
-          hasNationalServices,
-          data
-        };
-      })
-      .filter(_ => _.data.length > 0)
-      .sort((a, b) =>
-        a.organizationName
-          .toLocaleLowerCase()
-          .localeCompare(b.organizationName.toLocaleLowerCase())
-      );
-  }
+  [
+    servicesSelector,
+    organizationNamesByFiscalCodeSelector,
+    servicesMetadataSelector
+  ],
+  (services, organizations, servicesMetadata) =>
+    getGenericServices(services, organizations, servicesMetadata)
 );
 
 export const nationalServiceSectionsSelector = createSelector(
@@ -106,87 +121,18 @@ export const nationalServiceSectionsSelector = createSelector(
     organizationNamesByFiscalCodeSelector,
     servicesMetadataSelector
   ],
-  (services, organizations, servicesMetadata) => {
-    const orgfiscalCodes = Object.keys(services.byOrgFiscalCode);
-    return orgfiscalCodes
-      .map(fiscalCode => {
-        const organizationName = organizations[fiscalCode] || fiscalCode;
-        const organizationFiscalCode = fiscalCode;
-        const serviceIdsForOrg = services.byOrgFiscalCode[fiscalCode] || [];
-
-        const data = serviceIdsForOrg
-          .map(id => services.byId[id])
-          .filter(isDefined)
-          .filter(service => {
-            const id = pot.isSome(service)
-              ? service.value.service_id
-              : undefined;
-            if (id) {
-              const potServiceMetadata = servicesMetadata.byId[id] || pot.none;
-              const serviceMetadata = pot.getOrElse(
-                potServiceMetadata,
-                {} as pot.PotType<typeof potServiceMetadata>
-              );
-
-              return serviceMetadata.scope === "NATIONAL";
-            } else {
-              return undefined;
-            }
-          });
-        return {
-          organizationName,
-          organizationFiscalCode,
-          data
-        };
-      })
-      .filter(_ => _.data.length > 0)
-      .sort((a, b) =>
-        a.organizationName
-          .toLocaleLowerCase()
-          .localeCompare(b.organizationName.toLocaleLowerCase())
-      );
-  }
+  (services, organizations, servicesMetadata) =>
+    getGenericServices(services, organizations, servicesMetadata, "NATIONAL")
 );
 
-export const nationalServiceSectionsSelector2 = createSelector(
+// TODO: use this selector to display the content of the "Other services" tab
+//        https://www.pivotaltracker.com/n/projects/2048617/stories/166818256
+export const localServiceSectionsSelector = createSelector(
   [
     servicesSelector,
     organizationNamesByFiscalCodeSelector,
     servicesMetadataSelector
   ],
-  (services, organizations, servicesMetadata) => {
-    const orgfiscalCodes = Object.keys(services.byOrgFiscalCode);
-    return orgfiscalCodes
-      .map(fiscalCode => {
-        const organizationName = organizations[fiscalCode] || fiscalCode;
-        const organizationFiscalCode = fiscalCode;
-        const serviceIdsForOrg = services.byOrgFiscalCode[fiscalCode] || [];
-        const data = serviceIdsForOrg
-          .map(id => {
-            const serviceData = services.byId[id];
-            const potServiceMetadata = servicesMetadata.byId[id] || pot.none;
-            const serviceMetadata = pot.getOrElse(
-              potServiceMetadata,
-              {} as pot.PotType<typeof potServiceMetadata>
-            );
-
-            return {
-              serviceData,
-              serviceMetadata
-            };
-          })
-          .filter(isDefined);
-        return {
-          organizationName,
-          organizationFiscalCode,
-          data
-        };
-      })
-      .filter(_ => _.data.length > 0)
-      .sort((a, b) =>
-        a.organizationName
-          .toLocaleLowerCase()
-          .localeCompare(b.organizationName.toLocaleLowerCase())
-      );
-  }
+  (services, organizations, servicesMetadata) =>
+    getGenericServices(services, organizations, servicesMetadata, "LOCAL")
 );

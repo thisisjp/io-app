@@ -1,3 +1,7 @@
+/**
+ * A screen that contains all the Tabs related to services.
+ */
+
 import * as pot from "italia-ts-commons/lib/pot";
 import { Tab, TabHeading, Tabs, Text } from "native-base";
 import * as React from "react";
@@ -21,8 +25,6 @@ import TopScreenComponent from "../../components/screens/TopScreenComponent";
 import OrganizationLogo from "../../components/services/OrganizationLogo";
 import ServiceSectionListComponent from "../../components/services/ServiceSectionListComponent";
 import ServicesLocal from "../../components/services/ServicesLocal";
-import ServicesNational from "../../components/services/ServicesNational";
-import ServicesOther from "../../components/services/ServicesOther";
 import { LightModalContextInterface } from "../../components/ui/LightModal";
 import Markdown from "../../components/ui/Markdown";
 import I18n from "../../i18n";
@@ -94,9 +96,7 @@ const styles = StyleSheet.create({
 });
 
 const AnimatedTabs = Animated.createAnimatedComponent(Tabs);
-/**
- * A screen that contains all the Tabs related to services.
- */
+
 class ServicesHomeScreen extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -201,10 +201,10 @@ class ServicesHomeScreen extends React.Component<Props, State> {
 
   //
   //
-  //TODO: it should be done before the list is rendered!
+  // TODO: it should be done before the list is rendered!
   //
   //
-  
+
   private onServiceSelect = (service: ServicePublic) => {
     // when a service gets selected, before navigating to the service detail
     // screen, we issue a contentServiceLoad to refresh the service metadata
@@ -301,14 +301,14 @@ class ServicesHomeScreen extends React.Component<Props, State> {
         </Tab>
         <Tab
           heading={
-              <TabHeading>
-                <Text style={styles.tabBarContent}>
-                  {I18n.t("services.tab.national")}
-                </Text>
-              </TabHeading>
+            <TabHeading>
+              <Text style={styles.tabBarContent}>
+                {I18n.t("services.tab.national")}
+              </Text>
+            </TabHeading>
           }
         >
-          <ServicesNational
+          {/*<ServicesNational
             animated={{
               onScroll: Animated.event(
                 [
@@ -346,7 +346,7 @@ class ServicesHomeScreen extends React.Component<Props, State> {
                 }
               ]
             }}
-          />
+          />*/}
           <ServiceSectionListComponent
             sections={this.props.nationalSections}
             profile={this.props.profile}
@@ -366,7 +366,7 @@ class ServicesHomeScreen extends React.Component<Props, State> {
             </TabHeading>
           }
         >
-          <ServicesOther
+          {/*<ServicesOther
             animated={{
               onScroll: Animated.event(
                 [
@@ -404,7 +404,8 @@ class ServicesHomeScreen extends React.Component<Props, State> {
                 }
               ]
             }}
-          />
+          />*/}
+          {/**TODO: render here only local sections without selected items */}
           <ServiceSectionListComponent
             sections={this.props.sections}
             profile={this.props.profile}

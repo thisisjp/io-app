@@ -20,10 +20,12 @@ import { GlobalState } from "./types";
  */
 export type ContentState = Readonly<{
   servicesMetadata: {
-    byId: {
-      [key: string]: pot.Pot<ServiceMetadata, string> | undefined;
-    };
+    byId: ServiceMetadataById;
   };
+}>;
+
+export type ServiceMetadataById = Readonly<{
+  [key: string]: pot.Pot<ServiceMetadata, string> | undefined;
 }>;
 
 const initialContentState: ContentState = {
