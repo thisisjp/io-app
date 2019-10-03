@@ -33,6 +33,10 @@ type MessageDetailScreenNavigationParams = {
   messageId: string;
 };
 
+type State = {
+  senderService: pot.Pot<ServicePublic, Error>;
+};
+
 type OwnProps = NavigationScreenProps<MessageDetailScreenNavigationParams>;
 
 type Props = OwnProps &
@@ -109,7 +113,12 @@ const styles = StyleSheet.create({
   }
 });
 
-export class MessageDetailScreen extends React.PureComponent<Props, never> {
+export class MessageDetailScreen extends React.PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { senderService: this.props.potService };
+  }
+
   private goBack = () => this.props.navigation.goBack();
 
   private onServiceLinkPressHandler = (service: ServicePublic) => {
@@ -237,12 +246,12 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
 
   // TODO: Add a Provider and an HOC to manage multiple render states in a simpler way.
   private renderCurrentState = () => {
-    const { potMessage, potService, paymentsByRptId } = this.props;
+    const { potMessage, paymentsByRptId } = this.props;
 
     if (pot.isSome(potMessage)) {
       return this.renderFullState(
         potMessage.value,
-        potService,
+        this.state.senderService,
         paymentsByRptId
       );
     }
@@ -268,17 +277,27 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
 
   public componentDidMount() {
     const { potMessage, refreshService } = this.props;
+    // if the message is loaded then refresh sender service data
     if (pot.isSome(potMessage)) {
       refreshService(potMessage.value.sender_service_id);
     }
     this.setMessageReadState();
   }
 
-  public componentDidUpdate(prevProps: Props) {
-    const { potMessage, refreshService } = this.props;
-    const { potMessage: prevPotMessage } = prevProps;
-    if (!pot.isSome(prevPotMessage) && pot.isSome(potMessage)) {
-      refreshService(potMessage.value.sender_service_id);
+  public componentDidUpdate() {
+    const { potService } = this.props;
+    if (pot.isSome(potService)) {
+      // update state with loaded service
+      if (pot.isNone(this.state.senderService)) {
+        this.setState({ senderService: potService });
+      }
+      // if loaded service is newer than cached one then render the most updated
+      else if (
+        pot.isSome(this.state.senderService) &&
+        this.state.senderService.value.version < potService.value.version
+      ) {
+        this.setState({ senderService: potService });
+      }
     }
     this.setMessageReadState();
   }
