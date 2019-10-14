@@ -8,7 +8,9 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  TouchableOpacity
+  TouchableOpacity,
+  Modal,
+  ActivityIndicator
 } from "react-native";
 import DeviceInfo from "react-native-device-info";
 import {
@@ -31,9 +33,14 @@ import { AlertModal } from "../../components/ui/AlertModal";
 import IconFont from "../../components/ui/IconFont";
 import { LightModalContextInterface } from "../../components/ui/LightModal";
 import Markdown from "../../components/ui/Markdown";
+import { withLoadingSpinner } from "../../components/helpers/withLoadingSpinner";
 import I18n from "../../i18n";
 import ROUTES from "../../navigation/routes";
-import { sessionExpired } from "../../store/actions/authentication";
+import {
+  LogoutOption,
+  logoutRequest,
+  sessionExpired
+} from "../../store/actions/authentication";
 import { setDebugModeEnabled } from "../../store/actions/debug";
 import {
   preferencesExperimentalFeaturesSetEnabled,
@@ -61,6 +68,10 @@ type Props = OwnProps &
   LightModalContextInterface &
   ReturnType<typeof mapDispatchToProps> &
   ReturnType<typeof mapStateToProps>;
+
+type State = {
+  isLoadingLogout: boolean;
+};
 
 const styles = StyleSheet.create({
   itemLeft: {
@@ -100,8 +111,15 @@ const getAppLongVersion = () => {
   return `${DeviceInfo.getVersion()}${buildNumber}`;
 };
 
-class ProfileMainScreen extends React.PureComponent<Props> {
+class ProfileMainScreen extends React.Component<Props, State> {
   private navListener?: NavigationEventSubscription;
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      isLoadingLogout: false
+    };
+  }
 
   public componentDidMount() {
     this.navListener = this.props.navigation.addListener("didFocus", () => {
@@ -160,11 +178,46 @@ class ProfileMainScreen extends React.PureComponent<Props> {
     );
   }
 
+  private renderLoading = () => {
+    if (!this.state.isLoadingLogout) {
+      return null;
+    }
+    return (
+      <Modal transparent={true} onRequestClose={() => null} visible={true}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(255, 255, 255, 0.5)",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <View
+            style={{ borderRadius: 10, backgroundColor: "white", padding: 25 }}
+          >
+            <Text style={{ fontSize: 20, fontWeight: "200" }}>Loading</Text>
+            <ActivityIndicator size="large" />
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  private logout = (logoutOption: LogoutOption) => {
+    if (this.state.isLoadingLogout) {
+      return;
+    }
+    this.props.hideModal();
+    this.props.logout(logoutOption);
+    this.setState({ isLoadingLogout: true });
+  };
+
   private onLogoutPress = () => {
     // Show a modal to let the user select a calendar
     this.props.showModal(
       <SelectLogoutOption
         onCancel={this.props.hideModal}
+        onOptionSelected={this.logout}
         header={
           <View>
             <H3 style={styles.modalHeader}>
@@ -441,6 +494,7 @@ class ProfileMainScreen extends React.PureComponent<Props> {
         banner={undefined}
       >
         {screenContent()}
+        {this.renderLoading()}
       </DarkLayout>
     );
   }
@@ -464,6 +518,7 @@ const mapStateToProps = (state: GlobalState) => ({
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
   resetPin: () => dispatch(startPinReset()),
+  logout: (logoutOption: LogoutOption) => dispatch(logoutRequest(logoutOption)),
   clearCache: () => dispatch(clearCache()),
   setDebugModeEnabled: (enabled: boolean) =>
     dispatch(setDebugModeEnabled(enabled)),
@@ -479,4 +534,4 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(withLightModalContext(ProfileMainScreen));
+)(withLightModalContext(withLoadingSpinner(ProfileMainScreen)));
