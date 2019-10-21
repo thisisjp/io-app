@@ -105,7 +105,10 @@ import {
 import ServiceDetailsScreen from "./ServiceDetailsScreen";
 
 type OwnProps = NavigationScreenProps;
-
+type DataLoadFailure =
+  | "servicesLoadFailure"
+  | "userMetadaLoadFailure"
+  | undefined;
 type ReduxMergedProps = Readonly<{
   dispatchUpdateOrganizationsOfInterestMetadata: (
     selectedItemIds: Option<Set<string>>
@@ -124,7 +127,8 @@ type State = {
   enableHeaderAnimation: boolean;
   isLongPressEnabled: boolean;
   enableServices: boolean;
-  toastContent?: string;
+  toastErrorMessage: string;
+  isInnerContentRendered: boolean;
 };
 
 // Scroll range is directly influenced by floating header height
@@ -217,7 +221,8 @@ class ServicesHomeScreen extends React.Component<Props, State> {
       enableHeaderAnimation: false,
       isLongPressEnabled: false,
       enableServices: false,
-      toastContent: undefined
+      toastErrorMessage: "",
+      isInnerContentRendered: false
     };
   }
 
@@ -338,7 +343,7 @@ class ServicesHomeScreen extends React.Component<Props, State> {
     );
   }
 
-  public componentDidUpdate(prevProps: Props, prevState: State) {
+  public componentDidUpdate(_: Props, prevState: State) {
     // saving current list scroll position to enable header animation
     // when shifting between tabs
     if (prevState.currentTab !== this.state.currentTab) {
@@ -351,32 +356,21 @@ class ServicesHomeScreen extends React.Component<Props, State> {
           this.scollPositions[i] = animatedValue.value;
         });
       });
-    } else {
-      // A toast is displayed if upsert userMetadata load fails
-      if (
-        this.state.toastContent &&
-        prevProps.potUserMetadata !== this.props.potUserMetadata &&
-        pot.isSome(this.props.potUserMetadata) &&
-        pot.isError(this.props.potUserMetadata)
-      ) {
-        showToast(this.state.toastContent, "danger");
-      }
-
-      // A toast is displayed if refresh visible services fails
-      if (
-        this.state.toastContent &&
-        ((prevProps.visibleServicesContentLoadState !==
-          this.props.visibleServicesContentLoadState &&
-          pot.isError(this.props.visibleServicesContentLoadState)) ||
-          (prevProps.visibleServicesMetadataLoadState !==
-            this.props.visibleServicesMetadataLoadState &&
-            pot.isError(this.props.visibleServicesMetadataLoadState)))
-      ) {
-        showToast(this.state.toastContent, "danger");
-      }
+    } else if (
+      this.state.isInnerContentRendered &&
+      this.props.loadDataFailure !== undefined
+    ) {
+      showToast(this.state.toastErrorMessage, "danger");
     }
     if (!prevState.enableHeaderAnimation && !this.props.isLoadingServices) {
       this.setState({ enableHeaderAnimation: true });
+    }
+    if (
+      !this.state.isInnerContentRendered &&
+      this.props.isFirstServiceLoadCompleted &&
+      this.props.loadDataFailure === undefined
+    ) {
+      this.setState({ isInnerContentRendered: true });
     }
   }
 
@@ -493,7 +487,7 @@ class ServicesHomeScreen extends React.Component<Props, State> {
     selectedFiscalCodes: Option<Set<string>>
   ) => {
     this.setState({
-      toastContent: I18n.t("serviceDetail.onUpdateEnabledChannelsFailure")
+      toastErrorMessage: I18n.t("serviceDetail.onUpdateEnabledChannelsFailure")
     });
     this.props.dispatchUpdateOrganizationsOfInterestMetadata(
       selectedFiscalCodes
@@ -561,31 +555,25 @@ class ServicesHomeScreen extends React.Component<Props, State> {
   };
 
   private renderErrorContent = () => {
-    const {
-      potUserMetadata,
-      refreshServices,
-      visibleServicesContentLoadState,
-      visibleServicesMetadataLoadState
-    } = this.props;
-
-    if (!this.state.toastContent) {
-      if (pot.isError(potUserMetadata)) {
+    const { refreshServices } = this.props;
+    // we will show a toast instead
+    if (this.state.isInnerContentRendered) {
+      return undefined;
+    }
+    switch (this.props.loadDataFailure) {
+      case "userMetadaLoadFailure":
         return this.renderErrorPlaceholder(() =>
           this.refreshScreenContent(true)
         );
-      } else if (
-        !pot.isLoading(potUserMetadata) &&
-        (pot.isError(visibleServicesContentLoadState) ||
-          pot.isError(visibleServicesMetadataLoadState))
-      ) {
+      case "servicesLoadFailure":
         return this.renderErrorPlaceholder(refreshServices);
-      }
+      default:
+        return undefined;
     }
-    return undefined;
   };
 
   private renderInnerContent = () => {
-    if (this.props.isFirstServiceLoadCompleted || this.state.toastContent) {
+    if (this.state.isInnerContentRendered) {
       return this.renderTabs();
     } else {
       return this.renderServiceLoadingPlaceholder();
@@ -634,7 +622,9 @@ class ServicesHomeScreen extends React.Component<Props, State> {
           item => item !== section.organizationFiscalCode
         );
         this.setState({
-          toastContent: I18n.t("serviceDetail.onUpdateEnabledChannelsFailure")
+          toastErrorMessage: I18n.t(
+            "serviceDetail.onUpdateEnabledChannelsFailure"
+          )
         });
         this.props.saveSelectedOrganizationItems(
           this.props.userMetadata,
@@ -668,7 +658,9 @@ class ServicesHomeScreen extends React.Component<Props, State> {
               sectionsState={this.props.allSections}
               profile={this.props.profile}
               onRefresh={() => {
-                this.setState({ toastContent: I18n.t("global.genericError") });
+                this.setState({
+                  toastErrorMessage: I18n.t("global.genericError")
+                });
                 this.props.refreshServices();
               }}
               navigateToServiceDetail={this.onServiceSelect}
@@ -682,7 +674,7 @@ class ServicesHomeScreen extends React.Component<Props, State> {
 
   private refreshScreenContent = (hideToast: boolean = false) => {
     if (!hideToast) {
-      this.setState({ toastContent: I18n.t("global.genericError") });
+      this.setState({ toastErrorMessage: I18n.t("global.genericError") });
     }
     this.props.refreshUserMetadata();
     this.props.refreshServices();
@@ -932,7 +924,18 @@ const mapStateToProps = (state: GlobalState) => {
     pot.isLoading(visibleServicesContentLoadState) ||
     pot.isLoading(visibleServicesMetadataLoadState);
 
+  const servicesLoadingFailure =
+    !pot.isLoading(potUserMetadata) &&
+    (pot.isError(visibleServicesContentLoadState) ||
+      pot.isError(visibleServicesMetadataLoadState));
+  const loadDataFailure: DataLoadFailure = pot.isError(potUserMetadata)
+    ? "userMetadaLoadFailure"
+    : servicesLoadingFailure
+      ? "servicesLoadFailure"
+      : undefined;
+
   return {
+    loadDataFailure,
     selectableOrganizations,
     selectedOrganizations: organizationsOfInterestSelector(state),
     isLoadingServices,
