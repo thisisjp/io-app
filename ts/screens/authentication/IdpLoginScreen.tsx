@@ -1,19 +1,17 @@
+import * as pot from "italia-ts-commons/lib/pot";
 import { Button, Text, View } from "native-base";
 import * as React from "react";
 import { Image, NavState, StyleSheet } from "react-native";
 import { WebView } from "react-native-webview";
-import { NavigationScreenProp, NavigationState } from "react-navigation";
 import { connect } from "react-redux";
-
-import { idpLoginUrlChanged } from "../../store/actions/authentication";
-
-import * as pot from "italia-ts-commons/lib/pot";
 import { IdpSuccessfulAuthentication } from "../../components/IdpSuccessfulAuthentication";
 import BaseScreenComponent from "../../components/screens/BaseScreenComponent";
 import { RefreshIndicator } from "../../components/ui/RefreshIndicator";
 import * as config from "../../config";
 import I18n from "../../i18n";
+import { idpLoginUrlChanged } from "../../store/actions/authentication";
 import { loginFailure, loginSuccess } from "../../store/actions/authentication";
+import { navigateBack } from "../../store/actions/navigation";
 import { Dispatch } from "../../store/actions/types";
 import {
   isLoggedIn,
@@ -23,12 +21,7 @@ import { GlobalState } from "../../store/reducers/types";
 import { SessionToken } from "../../types/SessionToken";
 import { extractLoginResult } from "../../utils/login";
 
-type OwnProps = {
-  navigation: NavigationScreenProp<NavigationState>;
-};
-
 type Props = ReturnType<typeof mapStateToProps> &
-  OwnProps &
   ReturnType<typeof mapDispatchToProps>;
 
 type State = {
@@ -53,25 +46,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 1000
   },
-
   errorContainer: {
     padding: 20,
     flex: 1,
     justifyContent: "center",
     alignItems: "center"
   },
-
   errorTitle: {
     fontSize: 20,
     marginTop: 10
   },
-
   errorBody: {
     marginTop: 10,
     marginBottom: 10,
     textAlign: "center"
   },
-
   errorButtonsContainer: {
     position: "absolute",
     bottom: 30,
@@ -121,33 +110,41 @@ class IdpLoginScreen extends React.Component<Props, State> {
     this.state = {
       requestState: pot.noneLoading
     };
+    this.updateLoginTrace = this.updateLoginTrace.bind(this);
+    this.handleLoadingError = this.handleLoadingError.bind(this);
+    this.handleLoginFailure = this.handleLoginFailure.bind(this);
+    this.setRequestStateToLoading = this.setRequestStateToLoading.bind(this);
+    this.handleNavigationStateChange = this.handleNavigationStateChange.bind(
+      this
+    );
+    this.handleShouldStartLoading = this.handleShouldStartLoading.bind(this);
+    this.renderMask = this.renderMask.bind(this);
   }
 
-  private updateLoginTrace = (url: string): void => {
+  private updateLoginTrace(url: string): void {
     // tslint:disable-next-line: no-object-mutation
     this.loginTrace = url;
-  };
+  }
 
-  private handleLoadingError = (): void => {
+  private handleLoadingError(): void {
     this.setState({
       requestState: pot.noneError("LOADING_ERROR")
     });
-  };
+  }
 
-  private handleLoginFailure = (errorCode?: string) => {
+  private handleLoginFailure(errorCode?: string) {
     this.props.dispatchLoginFailure();
     this.setState({
       requestState: pot.noneError("LOGIN_ERROR"),
       errorCode
     });
-  };
+  }
 
-  private goBack = this.props.navigation.goBack;
-
-  private setRequestStateToLoading = (): void =>
+  private setRequestStateToLoading(): void {
     this.setState({ requestState: pot.noneLoading });
+  }
 
-  private handleNavigationStateChange = (event: NavState): void => {
+  private handleNavigationStateChange(event: NavState): void {
     if (event.url && event.url !== this.loginTrace) {
       const urlChanged = event.url.split("?")[0];
       this.props.dispatchIdpLoginUrlChanged(urlChanged);
@@ -156,9 +153,9 @@ class IdpLoginScreen extends React.Component<Props, State> {
     this.setState({
       requestState: event.loading ? pot.noneLoading : pot.some(true)
     });
-  };
+  }
 
-  private handleShouldStartLoading = (event: NavState): boolean => {
+  private handleShouldStartLoading(event: NavState): boolean {
     const isLoginUrlWithToken = onNavigationStateChange(
       this.handleLoginFailure,
       this.props.dispatchLoginSuccess
@@ -166,9 +163,9 @@ class IdpLoginScreen extends React.Component<Props, State> {
     // URL can be loaded if it's not the login URL containing the session token - this avoids
     // making a (useless) GET request with the session in the URL
     return !isLoginUrlWithToken;
-  };
+  }
 
-  private renderMask = () => {
+  private renderMask() {
     if (pot.isLoading(this.state.requestState)) {
       return (
         <View style={styles.refreshIndicatorContainer}>
@@ -202,7 +199,7 @@ class IdpLoginScreen extends React.Component<Props, State> {
 
           <View style={styles.errorButtonsContainer}>
             <Button
-              onPress={this.goBack}
+              onPress={this.props.goBack}
               style={styles.cancelButtonStyle}
               block={true}
               light={true}
@@ -224,7 +221,7 @@ class IdpLoginScreen extends React.Component<Props, State> {
     }
     // loading complete, no mask needed
     return null;
-  };
+  }
 
   public render() {
     const { loggedOutWithIdpAuth, loggedInAuth } = this.props;
@@ -275,7 +272,10 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
   dispatchIdpLoginUrlChanged: (url: string) =>
     dispatch(idpLoginUrlChanged({ url })),
   dispatchLoginSuccess: (token: SessionToken) => dispatch(loginSuccess(token)),
-  dispatchLoginFailure: () => dispatch(loginFailure())
+  dispatchLoginFailure: () => dispatch(loginFailure()),
+  goBack: () => {
+    dispatch(navigateBack());
+  }
 });
 
 export default connect(
