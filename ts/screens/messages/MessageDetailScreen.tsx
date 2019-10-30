@@ -5,7 +5,6 @@ import * as React from "react";
 import { ActivityIndicator, Image, StyleSheet } from "react-native";
 import { NavigationScreenProps } from "react-navigation";
 import { connect } from "react-redux";
-
 import { CreatedMessageWithContent } from "../../../definitions/backend/CreatedMessageWithContent";
 import { CreatedMessageWithoutContent } from "../../../definitions/backend/CreatedMessageWithoutContent";
 import { ServiceId } from "../../../definitions/backend/ServiceId";
@@ -18,7 +17,10 @@ import {
   loadMessageWithRelations,
   setMessageReadState
 } from "../../store/actions/messages";
-import { navigateToServiceDetailsScreen } from "../../store/actions/navigation";
+import {
+  navigateBack,
+  navigateToServiceDetailsScreen
+} from "../../store/actions/navigation";
 import { loadService } from "../../store/actions/services";
 import { Dispatch, ReduxProps } from "../../store/actions/types";
 import { messageStateByIdSelector } from "../../store/reducers/entities/messages/messagesById";
@@ -110,21 +112,29 @@ const styles = StyleSheet.create({
 });
 
 export class MessageDetailScreen extends React.PureComponent<Props, never> {
-  private goBack = () => this.props.navigation.goBack();
+  constructor(props: Props) {
+    super(props);
+    this.onServiceLinkPressHandler = this.onServiceLinkPressHandler.bind(this);
+    this.renderEmptyState = this.renderEmptyState.bind(this);
+    this.renderErrorState = this.renderErrorState.bind(this);
+    this.renderFullState = this.renderFullState.bind(this);
+    this.renderCurrentState = this.renderCurrentState.bind(this);
+    this.setMessageReadState = this.setMessageReadState.bind(this);
+  }
 
-  private onServiceLinkPressHandler = (service: ServicePublic) => {
+  private onServiceLinkPressHandler(service: ServicePublic) {
     // When a service gets selected, before navigating to the service detail
     // screen, we issue a contentServiceLoad to refresh the service metadata
     this.props.contentServiceLoad(service.service_id);
     this.props.navigateToServiceDetailsScreen({
       service
     });
-  };
+  }
 
   /**
    * Renders the empty message state, when no message content is avaialable
    */
-  private renderEmptyState = () => {
+  private renderEmptyState() {
     return (
       <View style={styles.notFullStateContainer}>
         <Text style={styles.notFullStateMessageText}>
@@ -132,27 +142,25 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
         </Text>
       </View>
     );
-  };
+  }
 
   /**
    * Used when the App is trying to load the message/service.
    */
-  private renderLoadingState = () => {
-    return (
-      <View style={styles.notFullStateContainer}>
-        <Text style={styles.notFullStateMessageText}>
-          {I18n.t("messageDetails.loadingText")}
-        </Text>
-        <ActivityIndicator />
-      </View>
-    );
-  };
+  private loadingStateContent = (
+    <View style={styles.notFullStateContainer}>
+      <Text style={styles.notFullStateMessageText}>
+        {I18n.t("messageDetails.loadingText")}
+      </Text>
+      <ActivityIndicator />
+    </View>
+  );
 
   /**
    * Used when something went wrong but there is a way to recover.
    * (ex. the loading of the message/service failed but we can retry)
    */
-  private renderErrorState = () => {
+  private renderErrorState() {
     const messageId = this.props.navigation.getParam("messageId");
     const onRetry = this.props.maybeMeta
       .map(_ => () => this.props.loadMessageWithRelations(_))
@@ -191,7 +199,7 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
           <Button
             block={true}
             cancel={true}
-            onPress={this.goBack}
+            onPress={this.props.goBack}
             style={styles.errorStateCancelButton}
           >
             <Text>{I18n.t("global.buttons.cancel")}</Text>
@@ -207,16 +215,16 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
         </View>
       </View>
     );
-  };
+  }
 
   /**
    * Used when we have all data to properly render the content of the screen.
    */
-  private renderFullState = (
+  private renderFullState(
     message: CreatedMessageWithContent,
     service: pot.Pot<ServicePublic, Error>,
     paymentsByRptId: Props["paymentsByRptId"]
-  ) => {
+  ) {
     const { isDebugModeEnabled } = this.props;
     return (
       <Content noPadded={true}>
@@ -233,12 +241,11 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
         />
       </Content>
     );
-  };
+  }
 
   // TODO: Add a Provider and an HOC to manage multiple render states in a simpler way.
-  private renderCurrentState = () => {
+  private renderCurrentState() {
     const { potMessage, potService, paymentsByRptId } = this.props;
-
     if (pot.isSome(potMessage)) {
       return this.renderFullState(
         potMessage.value,
@@ -247,7 +254,7 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
       );
     }
     if (pot.isLoading(potMessage)) {
-      return this.renderLoadingState();
+      return this.loadingStateContent;
     }
     if (pot.isError(potMessage)) {
       return this.renderErrorState();
@@ -255,16 +262,16 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
 
     // Fallback to invalid state
     return this.renderEmptyState();
-  };
+  }
 
-  private setMessageReadState = () => {
+  private setMessageReadState() {
     const { potMessage, maybeRead } = this.props;
 
     if (pot.isSome(potMessage) && !maybeRead.getOrElse(true)) {
       // Set the message read state to TRUE
       this.props.setMessageReadState(true);
     }
-  };
+  }
 
   public componentDidMount() {
     const { potMessage, potService, refreshService } = this.props;
@@ -293,7 +300,7 @@ export class MessageDetailScreen extends React.PureComponent<Props, never> {
     return (
       <BaseScreenComponent
         headerTitle={I18n.t("messageDetails.headerTitle")}
-        goBack={this.goBack}
+        goBack={this.props.goBack}
       >
         {this.renderCurrentState()}
       </BaseScreenComponent>
@@ -344,7 +351,10 @@ const mapDispatchToProps = (dispatch: Dispatch, ownProps: OwnProps) => {
       dispatch(setMessageReadState(messageId, isRead)),
     navigateToServiceDetailsScreen: (
       params: InferNavigationParams<typeof ServiceDetailsScreen>
-    ) => dispatch(navigateToServiceDetailsScreen(params))
+    ) => dispatch(navigateToServiceDetailsScreen(params)),
+    goBack: () => {
+      dispatch(navigateBack());
+    }
   };
 };
 
