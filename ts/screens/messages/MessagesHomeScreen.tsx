@@ -101,6 +101,7 @@ class MessagesHomeScreen extends React.Component<Props, State> {
       currentTab: 0,
       hasRefreshedOnceUp: false
     };
+    this.onRefreshMessages = this.onRefreshMessages.bind(this);
   }
 
   private animatedScrollPositions: ReadonlyArray<Animated.Value> = [
@@ -112,12 +113,12 @@ class MessagesHomeScreen extends React.Component<Props, State> {
   // tslint:disable-next-line: readonly-array
   private scollPositions: number[] = [0, 0, 0];
 
-  private onRefreshMessages = () => {
+  private onRefreshMessages() {
     this.props.refreshMessages(
       this.props.lexicallyOrderedMessagesState,
       this.props.servicesById
     );
-  };
+  }
 
   public componentDidMount() {
     this.onRefreshMessages();
