@@ -8,7 +8,6 @@ import * as React from "react";
 import { Alert, StyleSheet } from "react-native";
 import { NavigationScreenProp, NavigationState } from "react-navigation";
 import { connect } from "react-redux";
-
 import Pinpad from "../../components/Pinpad";
 import BaseScreenComponent from "../../components/screens/BaseScreenComponent";
 import IconFont from "../../components/ui/IconFont";
@@ -74,6 +73,13 @@ class PinScreen extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
+    this.onPinFulfill = this.onPinFulfill.bind(this);
+    this.onPinConfirmFulfill = this.onPinConfirmFulfill.bind(this);
+    this.onPinConfirmRemoveLastDigit = this.onPinConfirmRemoveLastDigit.bind(
+      this
+    );
+    this.onPinReset = this.onPinReset.bind(this);
+    this.handleGoBack = this.handleGoBack.bind(this);
 
     // Initial state with PinUnselected
     this.state = {
@@ -84,16 +90,17 @@ class PinScreen extends React.Component<Props, State> {
   }
 
   // Method called when the first CodeInput is filled
-  public onPinFulfill = (code: PinString) =>
+  public onPinFulfill(code: PinString) {
     this.setState({
       pinState: {
         state: "PinSelected",
         pin: code
       }
     });
+  }
 
   // Method called when the confirmation CodeInput is valid and cancel button is pressed
-  public onPinConfirmRemoveLastDigit = () => {
+  public onPinConfirmRemoveLastDigit() {
     if (this.state.pinState.state === "PinConfirmed") {
       const pinState: PinSelected = {
         ...this.state.pinState,
@@ -103,10 +110,10 @@ class PinScreen extends React.Component<Props, State> {
         pinState
       });
     }
-  };
+  }
 
   // Method called when the confirmation CodeInput is filled
-  public onPinConfirmFulfill = (code: PinString, isValid: boolean) => {
+  public onPinConfirmFulfill(code: PinString, isValid: boolean) {
     // If the inserted PIN do not match we clear the component to let the user retry
     if (!isValid && this.pinConfirmComponent) {
       this.pinConfirmComponent.debounceClear();
@@ -130,7 +137,7 @@ class PinScreen extends React.Component<Props, State> {
         pin: code
       }
     });
-  };
+  }
 
   public onPinReset() {
     if (this.pinConfirmComponent) {
@@ -279,7 +286,7 @@ class PinScreen extends React.Component<Props, State> {
     );
   }
 
-  private handleGoBack = () =>
+  private handleGoBack() {
     Alert.alert(
       I18n.t("onboarding.alert.title"),
       I18n.t("onboarding.alert.description"),
@@ -295,6 +302,7 @@ class PinScreen extends React.Component<Props, State> {
         }
       ]
     );
+  }
 
   public render() {
     const { pinState } = this.state;

@@ -3,10 +3,9 @@
  */
 import { Button, Text, View } from "native-base";
 import * as React from "react";
+import { Alert } from "react-native";
 import { NavigationScreenProps } from "react-navigation";
 import { connect } from "react-redux";
-
-import { Alert } from "react-native";
 import ScreenContent from "../../components/screens/ScreenContent";
 import TopScreenComponent from "../../components/screens/TopScreenComponent";
 import I18n from "../../i18n";
@@ -26,11 +25,15 @@ export type BiometryPrintableSimpleType =
   | "TOUCH_ID"
   | "FACE_ID";
 
-type OwnProps = NavigationScreenProps<NavigationParams>;
-
-type Props = OwnProps & ReturnType<typeof mapDispatchToProps>;
+type Props = NavigationScreenProps<NavigationParams> &
+  ReturnType<typeof mapDispatchToProps>;
 
 export class FingerprintScreen extends React.PureComponent<Props> {
+  constructor(props: Props) {
+    super(props);
+    this.handleGoBack = this.handleGoBack.bind(this);
+  }
+
   /**
    * Print the only BiometrySimplePrintableType values that are passed to the UI
    * @param biometrySimplePrintableType
@@ -64,7 +67,7 @@ export class FingerprintScreen extends React.PureComponent<Props> {
     }
   }
 
-  private handleGoBack = () =>
+  private handleGoBack() {
     Alert.alert(
       I18n.t("onboarding.alert.title"),
       I18n.t("onboarding.alert.description"),
@@ -76,14 +79,17 @@ export class FingerprintScreen extends React.PureComponent<Props> {
         {
           text: I18n.t("global.buttons.exit"),
           style: "default",
-          onPress: () => this.props.abortOnboarding()
+          onPress: this.props.abortOnboarding
         }
       ]
     );
+  }
+
+  get biometryType() {
+    return this.props.navigation.getParam("biometryType");
+  }
 
   public render() {
-    const biometryType = this.props.navigation.getParam("biometryType");
-
     return (
       <TopScreenComponent
         goBack={this.handleGoBack}
@@ -92,15 +98,14 @@ export class FingerprintScreen extends React.PureComponent<Props> {
       >
         <ScreenContent
           title={I18n.t("onboarding.fingerprint.title")}
-          icon={this.renderIcon(biometryType)}
+          icon={this.renderIcon(this.biometryType)}
         >
           <View content={true}>
             <Text>
-              {biometryType !== "NOT_ENROLLED"
+              {this.biometryType !== "NOT_ENROLLED"
                 ? I18n.t("onboarding.fingerprint.body.enrolledText", {
-                    biometryType: this.renderBiometryType(
-                      biometryType as BiometryPrintableSimpleType
-                    )
+                    biometryType: this.renderBiometryType(this
+                      .biometryType as BiometryPrintableSimpleType)
                   })
                 : I18n.t("onboarding.fingerprint.body.notEnrolledText")}
             </Text>

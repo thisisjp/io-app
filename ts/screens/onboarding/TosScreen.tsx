@@ -6,10 +6,9 @@
 import * as pot from "italia-ts-commons/lib/pot";
 import { Content, Text, View } from "native-base";
 import * as React from "react";
+import { Alert, StyleSheet } from "react-native";
 import { NavigationScreenProp, NavigationState } from "react-navigation";
 import { connect } from "react-redux";
-
-import { Alert, StyleSheet } from "react-native";
 import BaseScreenComponent from "../../components/screens/BaseScreenComponent";
 import FooterWithButtons from "../../components/ui/FooterWithButtons";
 import H4 from "../../components/ui/H4";
@@ -53,16 +52,41 @@ const styles = StyleSheet.create({
  * A screen to show the ToS to the user.
  */
 class TosScreen extends React.PureComponent<Props> {
-  public render() {
-    const { navigation, dispatch } = this.props;
+  constructor(props: Props) {
+    super(props);
+    this.handleGoBack = this.handleGoBack.bind(this);
+  }
 
-    const isProfile = navigation.getParam("isProfile", false);
+  get isProfile() {
+    return this.props.navigation.getParam("isProfile", false);
+  }
+
+  private handleGoBack() {
+    Alert.alert(
+      I18n.t("onboarding.alert.title"),
+      I18n.t("onboarding.alert.description"),
+      [
+        {
+          text: I18n.t("global.buttons.cancel"),
+          style: "cancel"
+        },
+        {
+          text: I18n.t("global.buttons.exit"),
+          style: "default",
+          onPress: () => this.props.dispatch(abortOnboarding())
+        }
+      ]
+    );
+  }
+
+  public render() {
+    const { dispatch } = this.props;
 
     return (
       <BaseScreenComponent
         goBack={this.handleGoBack}
         headerTitle={
-          isProfile
+          this.isProfile
             ? I18n.t("profile.main.screenTitle")
             : I18n.t("onboarding.tos.headerTitle")
         }
@@ -80,14 +104,14 @@ class TosScreen extends React.PureComponent<Props> {
             <Markdown>{I18n.t("profile.main.privacy.text")}</Markdown>
           </View>
         </Content>
-        {isProfile === false && (
+        {this.isProfile === false && (
           <FooterWithButtons
             type={"TwoButtonsInlineThird"}
             leftButton={{
               block: true,
               light: true,
               bordered: true,
-              onPress: () => this.handleGoBack(),
+              onPress: this.handleGoBack,
               title: I18n.t("global.buttons.exit")
             }}
             rightButton={{
@@ -101,23 +125,6 @@ class TosScreen extends React.PureComponent<Props> {
       </BaseScreenComponent>
     );
   }
-
-  private handleGoBack = () =>
-    Alert.alert(
-      I18n.t("onboarding.alert.title"),
-      I18n.t("onboarding.alert.description"),
-      [
-        {
-          text: I18n.t("global.buttons.cancel"),
-          style: "cancel"
-        },
-        {
-          text: I18n.t("global.buttons.exit"),
-          style: "default",
-          onPress: () => this.props.dispatch(abortOnboarding())
-        }
-      ]
-    );
 }
 
 function mapStateToProps(state: GlobalState) {
