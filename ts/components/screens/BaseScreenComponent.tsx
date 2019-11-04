@@ -29,7 +29,8 @@ type BaseHeaderProps =
   | "onShowHelp"
   | "body"
   | "isSearchAvailable"
-  | "searchType";
+  | "searchType"
+  | "foregroundForAnimation";
 
 type Props = OwnProps &
   Pick<React.ComponentProps<typeof BaseHeader>, BaseHeaderProps>;
@@ -64,7 +65,8 @@ class BaseScreenComponent extends React.PureComponent<Props, State> {
       headerTitle,
       primary,
       isSearchAvailable,
-      searchType
+      searchType,
+      foregroundForAnimation
     } = this.props;
     return (
       <Container>
@@ -78,6 +80,7 @@ class BaseScreenComponent extends React.PureComponent<Props, State> {
           searchType={searchType}
           body={headerBody}
           appLogo={appLogo}
+          foregroundForAnimation={foregroundForAnimation}
         />
 
         {this.props.children}

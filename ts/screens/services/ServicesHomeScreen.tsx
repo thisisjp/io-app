@@ -177,7 +177,6 @@ class ServicesHomeScreen extends React.Component<Props, State> {
           <ScreenContentHeader
             title={I18n.t("services.title")}
             icon={require("../../../img/icons/services-icon.png")}
-            fixed={true}
           />
           {this.renderTabs()}
         </React.Fragment>

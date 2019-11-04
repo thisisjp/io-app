@@ -1,8 +1,12 @@
 import * as pot from "italia-ts-commons/lib/pot";
 import { Text, View } from "native-base";
 import React, { ComponentProps } from "react";
-import { Image, Platform, StyleSheet } from "react-native";
-import { getStatusBarHeight, isIphoneX } from "react-native-iphone-x-helper";
+import {
+  Image,
+  // Platform,
+  StyleSheet
+} from "react-native";
+// import { getStatusBarHeight, isIphoneX } from "react-native-iphone-x-helper";
 
 import { none, Option, some } from "fp-ts/lib/Option";
 import I18n from "../../i18n";
@@ -14,22 +18,19 @@ import {
   withItemsSelection
 } from "../helpers/withItemsSelection";
 import { ListSelectionBar } from "../ListSelectionBar";
-import MessageList from "./MessageList";
+import AnimatedMessageList from "./AnimatedMessageList";
 
-const SCROLL_RANGE_FOR_ANIMATION =
-  customVariables.appHeaderHeight +
-  (Platform.OS === "ios"
-    ? isIphoneX()
-      ? 18
-      : getStatusBarHeight(true)
-    : customVariables.spacerHeight);
+// const SCROLL_RANGE_FOR_ANIMATION =
+//   customVariables.appHeaderHeight +
+//   (Platform.OS === "ios"
+//     ? isIphoneX()
+//       ? 18
+//       : getStatusBarHeight(true)
+//     : customVariables.spacerHeight);
 
 const styles = StyleSheet.create({
   listWrapper: {
     flex: 1
-  },
-  animatedStartPosition: {
-    bottom: SCROLL_RANGE_FOR_ANIMATION
   },
   emptyListWrapper: {
     padding: customVariables.contentPadding,
@@ -42,9 +43,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingTop: customVariables.contentPadding,
     fontSize: customVariables.fontSizeSmall
-  },
-  paddingForAnimation: {
-    height: 55
   },
   listContainer: {
     flex: 1
@@ -60,21 +58,16 @@ type OwnProps = {
   ) => void;
 };
 
-type AnimationProps = {
-  // paddingForAnimation has value equal to screen header. It is necessary
-  // because header has absolute position
-  paddingForAnimation: boolean;
-  AnimatedCTAStyle?: any;
-};
-type MessageListProps =
+type AnimatedMessageListProps =
   | "servicesById"
   | "paymentsByRptId"
-  | "onRefresh"
-  | "animated";
+  | "onRefresh";
 
-type Props = Pick<ComponentProps<typeof MessageList>, MessageListProps> &
+type Props = Pick<
+  ComponentProps<typeof AnimatedMessageList>,
+  AnimatedMessageListProps
+> &
   OwnProps &
-  AnimationProps &
   InjectedWithItemsSelectionProps;
 
 type State = {
@@ -83,7 +76,7 @@ type State = {
   allMessageIdsState: Option<Set<string>>;
 };
 
-const ListEmptyComponent = (paddingForAnimation: boolean) => (
+const ListEmptyComponent = () => (
   <View style={styles.emptyListWrapper}>
     <View spacer={true} />
     <Image
@@ -95,7 +88,6 @@ const ListEmptyComponent = (paddingForAnimation: boolean) => (
     <Text style={styles.emptyListContentSubtitle}>
       {I18n.t("messages.archive.emptyMessage.subtitle")}
     </Text>
-    {paddingForAnimation && <View style={styles.paddingForAnimation} />}
   </View>
 );
 
@@ -114,7 +106,7 @@ const generateMessagesStateArchivedArray = (
 
 /**
  * A component to render a list of archived messages.
- * It acts like a wrapper for the MessageList component, filtering the messages
+ * It acts like a wrapper for the AnimatedMessageList component, filtering the messages
  * and adding the messages selection and archiving management.
  */
 class MessagesArchive extends React.PureComponent<Props, State> {
@@ -156,19 +148,13 @@ class MessagesArchive extends React.PureComponent<Props, State> {
 
   public render() {
     const isLoading = pot.isLoading(this.props.messagesState);
-    const {
-      animated,
-      AnimatedCTAStyle,
-      paddingForAnimation,
-      selectedItemIds,
-      resetSelection
-    } = this.props;
+    const { selectedItemIds, resetSelection } = this.props;
     const { allMessageIdsState } = this.state;
 
     return (
       <View style={styles.listWrapper}>
         <View style={styles.listContainer}>
-          <MessageList
+          <AnimatedMessageList
             {...this.props}
             messageStates={this.state.filteredMessageStates}
             onPressItem={this.handleOnPressItem}
@@ -176,7 +162,6 @@ class MessagesArchive extends React.PureComponent<Props, State> {
             refreshing={isLoading}
             selectedMessageIds={selectedItemIds}
             ListEmptyComponent={ListEmptyComponent}
-            animated={animated}
           />
         </View>
         <ListSelectionBar
@@ -186,10 +171,6 @@ class MessagesArchive extends React.PureComponent<Props, State> {
           onToggleAllSelection={this.toggleAllMessagesSelection}
           onResetSelection={resetSelection}
           primaryButtonText={I18n.t("messages.cta.unarchive")}
-          containerStyle={[
-            AnimatedCTAStyle,
-            paddingForAnimation && styles.animatedStartPosition
-          ]}
         />
       </View>
     );

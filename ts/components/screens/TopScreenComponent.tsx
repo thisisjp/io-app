@@ -14,6 +14,7 @@ interface OwnProps {
 type BaseScreenComponentProps =
   | "dark"
   | "appLogo"
+  | "foregroundForAnimation"
   | "goBack"
   | "contextualHelp"
   | "headerBody";
@@ -36,7 +37,8 @@ class TopScreenComponent extends React.PureComponent<Props> {
       contextualHelp,
       headerBody,
       isSearchAvailable,
-      searchType
+      searchType,
+      foregroundForAnimation
     } = this.props;
 
     return (
@@ -49,6 +51,7 @@ class TopScreenComponent extends React.PureComponent<Props> {
         headerBody={headerBody}
         isSearchAvailable={isSearchAvailable}
         searchType={searchType}
+        foregroundForAnimation={foregroundForAnimation}
       >
         {this.props.children}
       </BaseScreenComponent>

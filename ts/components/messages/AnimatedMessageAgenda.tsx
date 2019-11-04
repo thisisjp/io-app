@@ -4,15 +4,17 @@ import { ITuple2 } from "italia-ts-commons/lib/tuples";
 import { Button, Text, View } from "native-base";
 import React, { ComponentProps } from "react";
 import {
+  Animated,
   Dimensions,
   Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Platform,
   SectionList,
   SectionListData,
   SectionListRenderItem,
   SectionListScrollParams,
-  StyleSheet,
-  Animated
+  StyleSheet
 } from "react-native";
 import variables from "../../theme/variables";
 
@@ -27,6 +29,9 @@ import customVariables from "../../theme/variables";
 import { CreatedMessageWithContentAndDueDate } from "../../types/CreatedMessageWithContentAndDueDate";
 import { format } from "../../utils/dates";
 import MessageListItem from "./MessageListItem";
+import { ifIphoneX } from "react-native-iphone-x-helper";
+import { withScreenHeaderContext } from "../helpers/withScreenHeaderContext";
+import { ScreenHeaderAnimationProviderContext } from "../ScreenHeaderAnimationProvider";
 
 // Used to calculate the cell item layouts.
 const LIST_HEADER_HEIGHT = 70;
@@ -35,7 +40,8 @@ const ITEM_HEIGHT = 158;
 const FAKE_ITEM_HEIGHT = 75;
 const ITEM_SEPARATOR_HEIGHT = 1;
 
-const TOP_INDICATOR_HEIGHT = 70;
+// const TOP_INDICATOR_HEIGHT = 70;
+const TOP_INDICATOR_HEIGHT = 270; // TODO: questo va animato
 const MARGIN_TOP_EMPTY_LIST = 30;
 
 const screenWidth = Dimensions.get("screen").width;
@@ -159,7 +165,9 @@ type OwnProps = {
   selectedMessageIds: Option<Set<string>>;
 };
 
-type Props = OwnProps & SelectedSectionListProps;
+type Props = OwnProps &
+  SelectedSectionListProps &
+  ScreenHeaderAnimationProviderContext;
 
 type State = {
   itemLayouts: ReadonlyArray<ItemLayout>;
@@ -260,16 +268,17 @@ const FakeItemComponent = (
   </View>
 );
 
-
-const AnimatedPullSectionList = Animated.createAnimatedComponent(PullSectionList);
+const AnimatedPullSectionList = Animated.createAnimatedComponent(
+  PullSectionList
+);
 
 /**
  * A component to render messages with due_date in a agenda like form.
  */
-class MessageAgenda extends React.PureComponent<Props, State> {
+class AnimatedMessageAgenda extends React.PureComponent<Props, State> {
   // Ref to section list
-  private sectionListRef = React.createRef<any>();
-  // private sectionListRef = React.createRef<typeof AnimatedPullSectionList>();
+  // private sectionListRef = React.createRef<any>();
+  private sectionListRef = React.createRef<typeof AnimatedPullSectionList>();
 
   constructor(props: Props) {
     super(props);
@@ -402,6 +411,24 @@ class MessageAgenda extends React.PureComponent<Props, State> {
     );
   }
 
+  // SectionList animation support functions
+  private _onMomentumScrollBegin = () => this.props._canJumpToTab(false);
+  private _onMomentumScrollEnd = () => this.props._canJumpToTab(true);
+  private _onScrollEndDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const velocity = (e.nativeEvent.velocity && e.nativeEvent.velocity.y) || 0;
+    if (
+      velocity === 0 ||
+      (Platform.OS === "android" && Math.abs(Math.round(velocity)) <= 2)
+    ) {
+      this.props.animation.handleIntermediateState(this.scrollToOffset);
+    }
+  };
+
+  // Scroll function used in handleIntermediateState function
+  private scrollToOffset = (offset: number, animated:boolean = false) => {
+    this.sectionListRef.current.getNode().scrollToOffset({ offset, animated });
+  };
+
   public render() {
     const {
       sections,
@@ -411,14 +438,31 @@ class MessageAgenda extends React.PureComponent<Props, State> {
       onContentSizeChange
     } = this.props;
 
+    const { scrollY, fullHeight } = this.props.animation;
+
     return (
       <View style={styles.fill}>
         {sections.length === 0 && this.topIndicatorRender()}
-        {/* <PullSectionList */}
         <AnimatedPullSectionList
+          // Animation props
+          // scrollEventThrottle={8}
+          scrollEventThrottle={1}
+          onScrollEndDrag={this._onScrollEndDrag}
+          onMomentumScrollBegin={this._onMomentumScrollBegin}
+          onMomentumScrollEnd={this._onMomentumScrollEnd}
+          contentContainerStyle={[
+            { paddingTop: fullHeight + ifIphoneX(15, 0)} // , contentContainerStyle TODO: rimuvere?
+          ]}
+          // onScroll2={Animated.event(
+          //   [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          //   { useNativeDriver: true }
+          // )}
+          onScroll2={(e) => console.log("asdasdasdsa", e)}
+          // Functional props
           loadMoreData={this.loadMoreData}
           topIndicatorRender={this.topIndicatorRender}
-          topIndicatorHeight={TOP_INDICATOR_HEIGHT}
+          // topIndicatorHeight={TOP_INDICATOR_HEIGHT}
+          topIndicatorHeight={fullHeight}
           sectionsLength={sections.length}
           ref={this.sectionListRef}
           ListEmptyComponent={ListEmptyComponent}
@@ -439,23 +483,18 @@ class MessageAgenda extends React.PureComponent<Props, State> {
             },
             styles.scrollList
           ]}
-          scrollEventThrottle={8}
-          onScroll2={()=> console.log('asdasdasdsa')}
-          // onScroll={()=> console.log('asdasdasdsa')}
-          // scrollToLocation={this.scrollToLocation}
+          scrollToLocation={this.scrollToLocation}
+
         />
       </View>
     );
   }
 
   public scrollToLocation = (params: SectionListScrollParams) => {
-    // if (this.sectionListRef.current !== null) {
-    //   this.sectionListRef.current.scrollToLocation(params);
-    // }
     if (this.sectionListRef.current.getNode() !== null) {
       this.sectionListRef.current.getNode().scrollToLocation(params);
     }
   };
 }
 
-export default MessageAgenda;
+export default withScreenHeaderContext(AnimatedMessageAgenda);

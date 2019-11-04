@@ -4,10 +4,14 @@ import * as pot from "italia-ts-commons/lib/pot";
 import { View } from "native-base";
 import React from "react";
 import {
+  Animated,
   FlatList,
   ListRenderItemInfo,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   RefreshControl,
-  StyleSheet
+  StyleSheet,
+  Platform
 } from "react-native";
 import { NavigationEvents } from "react-navigation";
 import Placeholder from "rn-placeholder";
@@ -20,6 +24,9 @@ import { ServicesByIdState } from "../../store/reducers/entities/services/servic
 import customVariables from "../../theme/variables";
 import { messageNeedsCTABar } from "../../utils/messages";
 import MessageListItem from "./MessageListItem";
+import { ifIphoneX } from "react-native-iphone-x-helper";
+import { withScreenHeaderContext } from "../helpers/withScreenHeaderContext";
+import { ScreenHeaderAnimationProviderContext } from "../ScreenHeaderAnimationProvider";
 
 type ItemLayout = {
   length: number;
@@ -41,7 +48,7 @@ type OwnProps = {
   >["ListEmptyComponent"];
 };
 
-type Props = OwnProps;
+type Props = OwnProps & ScreenHeaderAnimationProviderContext;
 
 type State = {
   prevMessageStates?: ReadonlyArray<MessageState>;
@@ -173,13 +180,14 @@ const MessageListItemPlaceholder = (
 );
 
 const ItemSeparatorComponent = () => <View style={styles.itemSeparator} />;
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
-class MessageList extends React.Component<Props, State> {
-  private flatListRef = React.createRef<FlatList<MessageState>>();
+class AnimatedMessageList extends React.Component<Props, State> {
+  private flatListRef = React.createRef<typeof AnimatedFlatList>();
 
   private scrollTo = (index: number, animated: boolean = false) => {
     if (this.flatListRef.current && this.props.messageStates.length > 0) {
-      this.flatListRef.current.scrollToIndex({ animated, index });
+      this.flatListRef.current.getNode().scrollToIndex({ animated, index });
     }
   };
 
@@ -305,6 +313,24 @@ class MessageList extends React.Component<Props, State> {
     }
   };
 
+  // Flatlist animation support functions
+  private _onMomentumScrollBegin = () => this.props._canJumpToTab(false);
+  private _onMomentumScrollEnd = () => this.props._canJumpToTab(true);
+  private _onScrollEndDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const velocity = (e.nativeEvent.velocity && e.nativeEvent.velocity.y) || 0;
+    if (
+      velocity === 0 ||
+      (Platform.OS === "android" && Math.abs(Math.round(velocity)) <= 2)
+    ) {
+      this.props.animation.handleIntermediateState(this.scrollToOffset);
+    }
+  };
+
+  // Scroll function used in handleIntermediateState function
+  private scrollToOffset = (offset: number, animated: boolean = false) => {
+    this.flatListRef.current.getNode().scrollToOffset({ offset, animated });
+  };
+
   public render() {
     const {
       messageStates,
@@ -316,13 +342,33 @@ class MessageList extends React.Component<Props, State> {
     } = this.props;
 
     const refreshControl = (
-      <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      <RefreshControl
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        // style={{ paddingTop: 100 }}
+      />
     );
+
+    const { scrollY, fullHeight } = this.props.animation;
+    // const { contentContainerStyle } = this.props;
 
     return (
       <React.Fragment>
         <NavigationEvents onWillFocus={() => this.scrollTo(0)} />
-        <FlatList
+        <AnimatedFlatList
+          // Animation props
+          scrollEventThrottle={1}
+          onScrollEndDrag={this._onScrollEndDrag}
+          onMomentumScrollBegin={this._onMomentumScrollBegin}
+          onMomentumScrollEnd={this._onMomentumScrollEnd}
+          contentContainerStyle={[
+            { paddingTop: fullHeight + ifIphoneX(15, 0) } // , contentContainerStyle TODO: rimuvere?
+          ]}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+          // Functional props
           ref={this.flatListRef}
           data={messageStates}
           extraData={{ servicesById, paymentsByRptId }}
@@ -340,4 +386,4 @@ class MessageList extends React.Component<Props, State> {
   }
 }
 
-export default MessageList;
+export default withScreenHeaderContext(AnimatedMessageList);

@@ -34,6 +34,7 @@ import MessageAgenda, {
   MessageAgendaSection,
   Sections
 } from "./MessageAgenda";
+import AnimatedMessageAgenda from './AnimatedMessageAgenda';
 
 // How many past months to load in batch
 const PAST_DATA_MONTHS = 3;
@@ -315,6 +316,8 @@ const selectMoreSectionsToRenderAsync = async (
 class MessagesDeadlines extends React.PureComponent<Props, State> {
   private scrollToLocation: Option<SectionListScrollParams> = none;
   private messageAgendaRef = React.createRef<MessageAgenda>();
+  // private messageAgendaRef = React.createRef<typeof AnimatedMessageAgenda>();
+  // private messageAgendaRef = React.createRef<any>();
 
   /**
    * Used to maintain the same ScrollView position when loading
@@ -324,6 +327,7 @@ class MessagesDeadlines extends React.PureComponent<Props, State> {
     if (this.messageAgendaRef.current && this.scrollToLocation.isSome()) {
       // Scroll to the sectionIndex we was before the content size change.
       this.messageAgendaRef.current.scrollToLocation(
+      // this.messageAgendaRef.current.getNode().scrollToLocation(
         this.scrollToLocation.value
       );
       // Reset the value to none.
@@ -517,6 +521,7 @@ class MessagesDeadlines extends React.PureComponent<Props, State> {
     return (
       <View style={styles.listWrapper}>
         <View style={styles.listContainer}>
+          {/* <AnimatedMessageAgenda */}
           <MessageAgenda
             ref={this.messageAgendaRef}
             sections={sectionsToRender}

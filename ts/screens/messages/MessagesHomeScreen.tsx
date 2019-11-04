@@ -1,16 +1,28 @@
 import * as pot from "italia-ts-commons/lib/pot";
-import { Tab, TabHeading, Tabs, Text } from "native-base";
+import {
+  // ScrollableTab,
+  Tab,
+  TabHeading,
+  Tabs,
+  Text,
+  // View,
+  DefaultTabBar,
+  Button
+} from "native-base";
 import * as React from "react";
-import { Animated, Platform, StyleSheet } from "react-native";
-import { getStatusBarHeight, isIphoneX } from "react-native-iphone-x-helper";
+import {
+  // Platform,
+  StyleSheet
+} from "react-native";
+// import { getStatusBarHeight, isIphoneX } from "react-native-iphone-x-helper";
 
 import { NavigationScreenProps } from "react-navigation";
 import { connect } from "react-redux";
 import MessagesArchive from "../../components/messages/MessagesArchive";
 import MessagesDeadlines from "../../components/messages/MessagesDeadlines";
 import MessagesInbox from "../../components/messages/MessagesInbox";
+import AnimatedMessagesInbox from "../../components/messages/AnimatedMessagesInbox";
 import MessagesSearch from "../../components/messages/MessagesSearch";
-import { ScreenContentHeader } from "../../components/screens/ScreenContentHeader";
 import TopScreenComponent from "../../components/screens/TopScreenComponent";
 import { MIN_CHARACTER_SEARCH_TEXT } from "../../components/search/SearchButton";
 import { SearchNoResultMessage } from "../../components/search/SearchNoResultMessage";
@@ -30,6 +42,9 @@ import {
 } from "../../store/reducers/search";
 import { GlobalState } from "../../store/reducers/types";
 import customVariables from "../../theme/variables";
+import AnimatedTabBar from "../../components/AnimatedTabBar";
+import ScreenHeaderAnimationProvider from "../../components/ScreenHeaderAnimationProvider";
+import { ScreenContentHeader } from "../../components/screens/ScreenContentHeader";
 
 type Props = NavigationScreenProps &
   ReturnType<typeof mapStateToProps> &
@@ -40,14 +55,21 @@ type State = {
   hasRefreshedOnceUp: boolean;
 };
 
+export type Style = { [className: string]: string };
+
+type ChangeTabEvent = {
+  from: number;
+  i: number;
+  ref: any;
+};
 // Scroll range is directly influenced by floating header height
-const SCROLL_RANGE_FOR_ANIMATION =
-  customVariables.appHeaderHeight +
-  (Platform.OS === "ios"
-    ? isIphoneX()
-      ? 18
-      : getStatusBarHeight(true)
-    : customVariables.spacerHeight);
+// const SCROLL_RANGE_FOR_ANIMATION =
+//   customVariables.appHeaderHeight +
+//   (Platform.OS === "ios"
+//     ? isIphoneX()
+//       ? 18
+//       : getStatusBarHeight(true)
+//     : customVariables.spacerHeight);
 
 const styles = StyleSheet.create({
   tabBarContainer: {
@@ -72,7 +94,6 @@ const styles = StyleSheet.create({
   }
 });
 
-const AnimatedTabs = Animated.createAnimatedComponent(Tabs);
 /**
  * A screen that contains all the Tabs related to messages.
  */
@@ -81,37 +102,21 @@ class MessagesHomeScreen extends React.Component<Props, State> {
     super(props);
     this.state = {
       currentTab: 0,
+      // hasRefreshedOnceUp is used to avoid unwanted refresh of
+      // animation after a new set of messages is received from
+      // backend at first load
       hasRefreshedOnceUp: false
     };
   }
-
-  private animatedScrollPositions: ReadonlyArray<Animated.Value> = [
-    new Animated.Value(0),
-    new Animated.Value(0),
-    new Animated.Value(0)
-  ];
-
-  // tslint:disable-next-line: readonly-array
-  private scollPositions: number[] = [0, 0, 0];
 
   public componentDidMount() {
     this.props.refreshMessages();
   }
 
   public componentDidUpdate(prevprops: Props, prevstate: State) {
-    // saving current list scroll position to enable header animation
-    // when shifting between tabs
-    if (prevstate.currentTab !== this.state.currentTab) {
-      this.animatedScrollPositions.map((_, i) => {
-        // when current tab changes, listeners are not kept, so it is needed to
-        // assign them again.
-        this.animatedScrollPositions[i].removeAllListeners();
-        this.animatedScrollPositions[i].addListener(animatedValue => {
-          // tslint:disable-next-line: no-object-mutation
-          this.scollPositions[i] = animatedValue.value;
-        });
-      });
-    }
+    // hasRefreshedOnceUp is used to avoid unwanted refresh of
+    // animation after a new set of messages is received from
+    // backend at first load
     if (
       pot.isLoading(prevprops.lexicallyOrderedMessagesState) &&
       !pot.isLoading(this.props.lexicallyOrderedMessagesState) &&
@@ -121,6 +126,113 @@ class MessagesHomeScreen extends React.Component<Props, State> {
     }
   }
 
+  private renderAnimatedTabBar = (animation: any, canJumpToTab: boolean) => (
+    props: any
+  ) => {
+    return (
+      <AnimatedTabBar
+        animation={animation}
+        renderTabBar={() => (
+          <DefaultTabBar
+            renderTab={(
+              name: string,
+              page: number,
+              isTabActive: boolean,
+              onPressHandler: (_: number) => void,
+              tabStyle: Style,
+              activeTabStyle: Style,
+              textStyle: Style,
+              activeTextStyle: Style,
+              // @ts-ignore
+              tabHeaderStyle: Style,
+              tabFontSize: number
+              // tslint:disable: parameters-max-number
+            ) => (
+              <Button
+                style={{ flex: 1 }}
+                key={name}
+                onPress={() => {
+                  if (page !== this.state.currentTab && canJumpToTab) {
+                    animation.onTabPress(page);
+                  }
+                  onPressHandler(page);
+                }}
+              >
+                <TabHeading
+                  style={[isTabActive ? activeTabStyle : tabStyle]}
+                  // active={props.isTabActive}
+                >
+                  <Text
+                    style={[
+                      styles.tabBarContent,
+                      { fontSize: tabFontSize },
+                      isTabActive ? activeTextStyle : textStyle
+                    ]}
+                  >
+                    {name}
+                  </Text>
+                </TabHeading>
+              </Button>
+            )}
+            {...props}
+          />
+        )}
+      />
+    );
+  };
+
+  // private renderTabBar = (canJumpToTab: boolean) => (props: any) => {
+  //   return (
+  //     <DefaultTabBar
+  //       tabs={[
+  //         { name: "a", page: 0 },
+  //         { name: "b", page: 1 },
+  //         { name: "c", page: 2 }
+  //         // { name: `${I18n.t("messages.tab.inbox")}`, page: 0 },
+  //         // { name: `${I18n.t("messages.tab.deadlines")}`, page: 1 },
+  //         // { name: `${I18n.t("messages.tab.archive")}`, page: 2 }
+  //       ]}
+  //       renderTab={(
+  //         name: string,
+  //         page: number,
+  //         isTabActive: boolean,
+  //         onPressHandler: (_: number) => void,
+  //         tabStyle: Style,
+  //         activeTabStyle: Style,
+  //         textStyle: Style,
+  //         activeTextStyle: Style,
+  //         // @ts-ignore
+  //         tabHeaderStyle: Style,
+  //         tabFontSize: number
+  //       ) => (
+  //         <Button
+  //           style={{ flex: 1 }}
+  //           key={name}
+  //           onPress={() => {
+  //             onPressHandler(page);
+  //           }}
+  //         >
+  //           <TabHeading
+  //             style={[isTabActive ? activeTabStyle : tabStyle]}
+  //             // active={props.isTabActive}
+  //           >
+  //             <Text
+  //               style={[
+  //                 styles.tabBarContent,
+  //                 { fontSize: tabFontSize },
+  //                 isTabActive ? activeTextStyle : textStyle
+  //               ]}
+  //             >
+  //               {name}
+  //             </Text>
+  //           </TabHeading>
+  //         </Button>
+  //       )}
+  //       {...props}
+  //     />
+  //   );
+  // };
+
   public render() {
     const { isSearchEnabled } = this.props;
     return (
@@ -129,18 +241,13 @@ class MessagesHomeScreen extends React.Component<Props, State> {
         isSearchAvailable={true}
         searchType="Messages"
         appLogo={true}
+        foregroundForAnimation={true}
       >
-        {!isSearchEnabled && (
-          <React.Fragment>
-            <ScreenContentHeader
-              title={I18n.t("messages.contentTitle")}
-              icon={require("../../../img/icons/message-icon.png")}
-              fixed={Platform.OS === "ios"}
-            />
-            {this.renderTabs()}
-          </React.Fragment>
-        )}
-        {isSearchEnabled && this.renderSearch()}
+        {/* <ScreenContentHeader
+          title={I18n.t("messages.contentTitle")}
+          icon={require("./../../../img/icons/message-icon.png")}
+        /> */}
+        {isSearchEnabled ? this.renderSearch() : this.renderTabs()}
       </TopScreenComponent>
     );
   }
@@ -159,189 +266,88 @@ class MessagesHomeScreen extends React.Component<Props, State> {
     } = this.props;
 
     return (
-      <AnimatedTabs
-        tabContainerStyle={[styles.tabBarContainer, styles.tabBarUnderline]}
-        tabBarUnderlineStyle={styles.tabBarUnderlineActive}
-        onChangeTab={(evt: any) => {
-          this.setState({ currentTab: evt.i });
-        }}
-        initialPage={0}
-        style={
-          Platform.OS === "ios" && {
-            transform: [
-              {
-                // hasRefreshedOnceUp is used to avoid unwanted refresh of
-                // animation after a new set of messages is received from
-                // backend at first load
-                translateY: this.state.hasRefreshedOnceUp
-                  ? this.animatedScrollPositions[
-                      this.state.currentTab
-                    ].interpolate({
-                      inputRange: [
-                        0,
-                        SCROLL_RANGE_FOR_ANIMATION / 2,
-                        SCROLL_RANGE_FOR_ANIMATION
-                      ],
-                      outputRange: [
-                        SCROLL_RANGE_FOR_ANIMATION,
-                        SCROLL_RANGE_FOR_ANIMATION / 4,
-                        0
-                      ],
-                      extrapolate: "clamp"
-                    })
-                  : SCROLL_RANGE_FOR_ANIMATION
-              }
-            ]
-          }
-        }
-      >
-        <Tab
-          heading={
-            <TabHeading>
-              <Text style={styles.tabBarContent}>
-                {I18n.t("messages.tab.inbox")}
-              </Text>
-            </TabHeading>
-          }
-        >
-          <MessagesInbox
-            messagesState={lexicallyOrderedMessagesState}
-            servicesById={servicesById}
-            paymentsByRptId={paymentsByRptId}
-            onRefresh={refreshMessages}
-            setMessagesArchivedState={updateMessagesArchivedState}
-            navigateToMessageDetail={navigateToMessageDetail}
-            animated={
-              Platform.OS === "ios"
-                ? {
-                    onScroll: Animated.event(
-                      [
-                        {
-                          nativeEvent: {
-                            contentOffset: {
-                              y: this.animatedScrollPositions[0]
-                            }
-                          }
-                        }
-                      ],
-                      {
-                        useNativeDriver: true
-                      }
-                    ),
-                    scrollEventThrottle: 8 // target is 120fps
-                  }
-                : undefined
-            }
-            paddingForAnimation={Platform.OS === "ios"}
-            AnimatedCTAStyle={
-              Platform.OS === "ios"
-                ? {
-                    transform: [
-                      {
-                        translateY: this.animatedScrollPositions[
-                          this.state.currentTab
-                        ].interpolate({
-                          inputRange: [
-                            0,
-                            SCROLL_RANGE_FOR_ANIMATION / 2,
-                            SCROLL_RANGE_FOR_ANIMATION
-                          ],
-                          outputRange: [
-                            0,
-                            SCROLL_RANGE_FOR_ANIMATION * 0.75,
-                            SCROLL_RANGE_FOR_ANIMATION
-                          ],
-                          extrapolate: "clamp"
-                        })
-                      }
-                    ]
-                  }
-                : undefined
-            }
-          />
-        </Tab>
-        <Tab
-          heading={
-            <TabHeading>
-              <Text style={styles.tabBarContent}>
-                {I18n.t("messages.tab.deadlines")}
-              </Text>
-            </TabHeading>
-          }
-        >
-          <MessagesDeadlines
-            messagesState={lexicallyOrderedMessagesState}
-            servicesById={servicesById}
-            paymentsByRptId={paymentsByRptId}
-            setMessagesArchivedState={updateMessagesArchivedState}
-            navigateToMessageDetail={navigateToMessageDetail}
-          />
-        </Tab>
+      <ScreenHeaderAnimationProvider currentTab={this.state.currentTab}>
+        {(animation: any, { canJumpToTab }: { canJumpToTab: boolean }) => (
+          <Tabs
+            tabContainerStyle={[styles.tabBarContainer, styles.tabBarUnderline]}
+            tabBarUnderlineStyle={styles.tabBarUnderlineActive}
+            onChangeTab={(evt: ChangeTabEvent) => {
+              this.setState({ currentTab: evt.i });
+            }}
+            initialPage={0}
+            renderTabBar={this.renderAnimatedTabBar(animation, canJumpToTab)}
+            // renderTabBar={this.renderTabBar(true)}
+          >
+            <Tab
+              // heading={
+              //   <TabHeading>
+              //     <Text style={styles.tabBarContent}>
+              //       {I18n.t("messages.tab.inbox")}
+              //     </Text>
+              //   </TabHeading>
+              // }
+              // heading={"foo"}
+              heading={I18n.t("messages.tab.inbox")}
+            >
+              <AnimatedMessagesInbox
+                messagesState={lexicallyOrderedMessagesState}
+                servicesById={servicesById}
+                paymentsByRptId={paymentsByRptId}
+                onRefresh={refreshMessages}
+                setMessagesArchivedState={updateMessagesArchivedState}
+                navigateToMessageDetail={navigateToMessageDetail}
+              />
+              {/* <MessagesInbox
+                messagesState={lexicallyOrderedMessagesState}
+                servicesById={servicesById}
+                paymentsByRptId={paymentsByRptId}
+                onRefresh={refreshMessages}
+                setMessagesArchivedState={updateMessagesArchivedState}
+                navigateToMessageDetail={navigateToMessageDetail} /> */}
+            </Tab>
+            <Tab
+              // heading={
+              //   <TabHeading>
+              //     <Text style={styles.tabBarContent}>
+              //       {I18n.t("messages.tab.deadlines")}
+              //     </Text>
+              //   </TabHeading>
+              // }
+              // heading={"bar"}
+              heading={I18n.t("messages.tab.deadlines")}
+            >
+              <MessagesDeadlines
+                messagesState={lexicallyOrderedMessagesState}
+                servicesById={servicesById}
+                paymentsByRptId={paymentsByRptId}
+                setMessagesArchivedState={updateMessagesArchivedState}
+                navigateToMessageDetail={navigateToMessageDetail}
+              />
+            </Tab>
 
-        <Tab
-          heading={
-            <TabHeading>
-              <Text style={styles.tabBarContent}>
-                {I18n.t("messages.tab.archive")}
-              </Text>
-            </TabHeading>
-          }
-        >
-          <MessagesArchive
-            messagesState={lexicallyOrderedMessagesState}
-            servicesById={servicesById}
-            paymentsByRptId={paymentsByRptId}
-            onRefresh={refreshMessages}
-            setMessagesArchivedState={updateMessagesArchivedState}
-            navigateToMessageDetail={navigateToMessageDetail}
-            animated={
-              Platform.OS === "ios"
-                ? {
-                    onScroll: Animated.event(
-                      [
-                        {
-                          nativeEvent: {
-                            contentOffset: {
-                              y: this.animatedScrollPositions[2]
-                            }
-                          }
-                        }
-                      ],
-                      { useNativeDriver: true }
-                    ),
-                    scrollEventThrottle: 8 // target is 120fps
-                  }
-                : undefined
-            }
-            paddingForAnimation={Platform.OS === "ios"}
-            AnimatedCTAStyle={
-              Platform.OS === "ios"
-                ? {
-                    transform: [
-                      {
-                        translateY: this.animatedScrollPositions[
-                          this.state.currentTab
-                        ].interpolate({
-                          inputRange: [
-                            0,
-                            SCROLL_RANGE_FOR_ANIMATION / 2,
-                            SCROLL_RANGE_FOR_ANIMATION
-                          ],
-                          outputRange: [
-                            0,
-                            SCROLL_RANGE_FOR_ANIMATION * 0.75,
-                            SCROLL_RANGE_FOR_ANIMATION
-                          ],
-                          extrapolate: "clamp"
-                        })
-                      }
-                    ]
-                  }
-                : undefined
-            }
-          />
-        </Tab>
-      </AnimatedTabs>
+            <Tab
+              // heading={
+              //   <TabHeading>
+              //     <Text style={styles.tabBarContent}>
+              //       {I18n.t("messages.tab.archive")}
+              //     </Text>
+              //   </TabHeading>
+              // }
+              // heading={"baz"}
+              heading={I18n.t("messages.tab.archive")}
+            >
+              <MessagesArchive
+                messagesState={lexicallyOrderedMessagesState}
+                servicesById={servicesById}
+                paymentsByRptId={paymentsByRptId}
+                onRefresh={refreshMessages}
+                setMessagesArchivedState={updateMessagesArchivedState}
+                navigateToMessageDetail={navigateToMessageDetail}
+              />
+            </Tab>
+          </Tabs>
+        )}
+      </ScreenHeaderAnimationProvider>
     );
   };
 

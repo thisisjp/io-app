@@ -25,6 +25,7 @@ const styles = StyleSheet.create({
 
 interface OwnProps {
   dark?: boolean;
+  foregroundForAnimation?: boolean;
   headerTitle?: string;
   goBack?: React.ComponentProps<typeof GoBackButton>["goBack"];
   primary?: boolean;
@@ -40,12 +41,20 @@ type Props = OwnProps & ReturnType<typeof mapStateToProps>;
 
 class BaseHeaderComponent extends React.PureComponent<Props> {
   public render() {
-    const { goBack, headerTitle, body, isSearchEnabled, dark } = this.props;
+    const {
+      goBack,
+      headerTitle,
+      body,
+      isSearchEnabled,
+      dark,
+      foregroundForAnimation
+    } = this.props;
     return (
       <AppHeader
         primary={this.props.primary}
         noShadow={isSearchEnabled}
         dark={dark}
+        style={foregroundForAnimation ? { zIndex: 2 } : {}}
       >
         {this.renderLeft()}
 

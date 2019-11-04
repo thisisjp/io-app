@@ -18,7 +18,7 @@ import {
   withItemsSelection
 } from "../helpers/withItemsSelection";
 import { ListSelectionBar } from "../ListSelectionBar";
-import MessageList from "./MessageList";
+import AnimatedMessageList from "./AnimatedMessageList";
 
 // const SCROLL_RANGE_FOR_ANIMATION =
 //   customVariables.appHeaderHeight +
@@ -58,9 +58,15 @@ type OwnProps = {
   ) => void;
 };
 
-type MessageListProps = "servicesById" | "paymentsByRptId" | "onRefresh";
+type AnimatedMessageListProps =
+  | "servicesById"
+  | "paymentsByRptId"
+  | "onRefresh";
 
-type Props = Pick<ComponentProps<typeof MessageList>, MessageListProps> &
+type Props = Pick<
+  ComponentProps<typeof AnimatedMessageList>,
+  AnimatedMessageListProps
+> &
   OwnProps &
   InjectedWithItemsSelectionProps;
 
@@ -150,7 +156,7 @@ class MessagesInbox extends React.PureComponent<Props, State> {
     return (
       <View style={styles.listWrapper}>
         <View style={styles.listContainer}>
-          <MessageList
+          <AnimatedMessageList
             {...this.props}
             messageStates={this.state.filteredMessageStates}
             onPressItem={this.handleOnPressItem}
@@ -208,4 +214,3 @@ class MessagesInbox extends React.PureComponent<Props, State> {
 }
 
 export default withItemsSelection(MessagesInbox);
-
