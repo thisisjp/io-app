@@ -12,6 +12,11 @@ import customVariables from "../../theme/variables";
 type Props = Readonly<{
   navigation: NavigationScreenProp<NavigationState>;
 }>;
+
+type State = {
+  isLoadingCompleted: boolean;
+};
+
 const styles = StyleSheet.create({
   contentContainerStyle: {
     padding: customVariables.contentPadding
@@ -21,7 +26,19 @@ const styles = StyleSheet.create({
   }
 });
 
-class TemporarilyBlockedCieScreen extends React.Component<Props> {
+class TemporarilyBlockedCieScreen extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { isLoadingCompleted: false };
+    this.hanldeMarkdownLoadingCompleted = this.hanldeMarkdownLoadingCompleted.bind(
+      this
+    );
+  }
+
+  private hanldeMarkdownLoadingCompleted = () => {
+    this.setState({ isLoadingCompleted: true });
+  };
+
   public render(): React.ReactNode {
     const cancelButtonProps = {
       block: true,
@@ -37,35 +54,48 @@ class TemporarilyBlockedCieScreen extends React.Component<Props> {
       onPress: (): void => Alert.alert(I18n.t("global.notImplemented")),
       title: I18n.t("authentication.cie.temporarilyBlockedCieDoneButton")
     };
-
+    // replace with a computed value
+    const isCieIDAppInstalled = true;
     return (
       <Container>
         <BaseScreenComponent goBack={true}>
           <View style={styles.contentContainerStyle}>
-            <Markdown>
+            <Markdown onLoadEnd={this.hanldeMarkdownLoadingCompleted}>
               {I18n.t("authentication.cie.temporarilyBlockedCie")}
             </Markdown>
             <View spacer={true} />
-            <Button
-              block={true}
-              primary={true}
-              iconLeft={true}
-              // TODO: add redirect to the store or, if installed, to the CieID app https://www.pivotaltracker.com/story/show/169642034
-              onPress={(): void => Alert.alert(I18n.t("global.notImplemented"))}
-              testID={"landing-button-login-cie"}
-            >
-              <IconFont name={"io-cie"} color={customVariables.colorWhite} />
-              <Text>
-                {I18n.t("authentication.cie.temporarilyBlockedCieOpenCieID")}
-              </Text>
-            </Button>
+            {this.state.isLoadingCompleted &&
+              isCieIDAppInstalled && (
+                <Button
+                  block={true}
+                  primary={true}
+                  iconLeft={true}
+                  // TODO: add redirect to the store or, if installed, to the CieID app https://www.pivotaltracker.com/story/show/169642034
+                  onPress={(): void =>
+                    Alert.alert(I18n.t("global.notImplemented"))
+                  }
+                  testID={"landing-button-login-cie"}
+                >
+                  <IconFont
+                    name={"io-cie"}
+                    color={customVariables.colorWhite}
+                  />
+                  <Text>
+                    {I18n.t(
+                      "authentication.cie.temporarilyBlockedCieOpenCieID"
+                    )}
+                  </Text>
+                </Button>
+              )}
           </View>
         </BaseScreenComponent>
-        <FooterWithButtons
-          type={"TwoButtonsInlineThird"}
-          rightButton={retryButtonProps}
-          leftButton={cancelButtonProps}
-        />
+        {this.state.isLoadingCompleted && (
+          <FooterWithButtons
+            type={"TwoButtonsInlineThird"}
+            rightButton={retryButtonProps}
+            leftButton={cancelButtonProps}
+          />
+        )}
       </Container>
     );
   }
