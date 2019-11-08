@@ -1,11 +1,17 @@
-import { Text, View } from "native-base";
+import { Text, Input, View } from "native-base";
 import * as React from "react";
-import { StyleSheet, TextInput, TouchableWithoutFeedback } from "react-native";
+import {
+  StyleSheet,
+  TextInput,
+  TouchableWithoutFeedback,
+  Dimensions
+} from "react-native";
 
 import variables from "../../theme/variables";
 import { PinString } from "../../types/PinString";
 
 import { InputBox } from "./InputBox";
+import { Baseline } from "../Pinpad/Placeholders";
 
 interface Props {
   description: string;
@@ -16,9 +22,10 @@ interface Props {
 
 interface State {
   value: string;
+  pin: string[];
   pinSelected: number;
   codeSplit: ReadonlyArray<string>;
-  textInputRef: TextInput | null;
+  textInputRef: Input[];
 }
 
 const styles = StyleSheet.create({
@@ -32,13 +39,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     color: variables.colorWhite
   },
-  input: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: -1
+  placeHolderStyle: {
+    height: 4,
+    marginLeft: 2,
+    marginRight: 2,
+    marginTop: 2
   }
 });
 
@@ -49,14 +54,19 @@ const ARRAY_PIN = Array.from(Array(PIN_LENGTH).keys());
  * A customized CodeInput component.
  */
 class CiePinpad extends React.PureComponent<Props, State> {
+  private inputs: TextInput[];
+
   constructor(props: Props) {
     super(props);
     this.updateCode = this.updateCode.bind(this);
+    this.inputBoxGenerator = this.inputBoxGenerator.bind(this);
+    this.inputs = [];
     this.state = {
       value: "",
+      pin: new Array(8).fill(""),
       pinSelected: 0,
       codeSplit: [],
-      textInputRef: null
+      textInputRef: []
     };
   }
 
@@ -96,7 +106,7 @@ class CiePinpad extends React.PureComponent<Props, State> {
     alert(char);
   };
 
-  public inputBoxGenerator = (item: number, i: number) => {
+  private inputBoxGenerator = (item: number, i: number) => {
     const isSelected = (obj: number, index: number) => {
       switch (true) {
         case index === 0:
@@ -118,7 +128,81 @@ class CiePinpad extends React.PureComponent<Props, State> {
       }
       return false;
     };
+    let targetWidth = 36;
+    const margin = 2;
+    const screenWidth = Dimensions.get("window").width;
+    const totalMargins = margin * 2 * (PIN_LENGTH - 1);
+    const widthNeeded = targetWidth * PIN_LENGTH + totalMargins;
 
+    // if we have not enough space to place inputs
+    // compute a new width to fit it
+    // consider margin from both sides too
+    if (widthNeeded > screenWidth) {
+      targetWidth = (screenWidth - totalMargins) / PIN_LENGTH;
+    }
+    //console.warn(`${i}->${this.state.pin[i]}`);
+    return (
+      <View style={{ alignItems: "center" }}>
+        <TextInput
+          ref={c => {
+            // collect all inputs refs
+            if (c !== null && this.inputs.length < PIN_LENGTH) {
+              // tslint:disable-next-line: no-object-mutation
+              this.inputs = [...this.inputs, c];
+            }
+          }}
+          style={{
+            width: 36,
+            height: 36,
+            textAlign: "center"
+          }}
+          maxLength={1}
+          secureTextEntry={true}
+          keyboardType="number-pad"
+          autoFocus={false}
+          caretHidden={false}
+          onChangeText={text => {
+            const pin = this.state.pin;
+            pin.splice(i, 1, text);
+            this.setState({ pin: [...pin] });
+            if (pin.some(p => p === "") === false) {
+              this.props.onFulfill(pin.join("") as PinString, true);
+            }
+          }}
+          onKeyPress={({ nativeEvent }) => {
+            if (nativeEvent.key === "Backspace") {
+              // if it is the first element, do nothing
+              if (i === 0) {
+                return;
+              }
+              // check if a deletion is going.
+              // if yes change focus on the previous input
+              if (!this.state.pin[i] || this.state.pin[i].length === 0) {
+                this.inputs[i - 1].setState({ value: "" });
+                this.inputs[i - 1].focus();
+              }
+              return;
+            }
+            // if it is not the last element, change focus on next element
+            if (i + 1 < this.inputs.length) {
+              this.inputs[i + 1].focus();
+              return;
+            }
+          }}
+        />
+
+        <Baseline
+          color={
+            !this.state.pin[i] || this.state.pin[i].length === 0
+              ? variables.brandLightGray
+              : variables.brandDarkestGray
+          }
+          placeHolderStyle={{ ...styles.placeHolderStyle, width: targetWidth }}
+          key={`baseline-${i}`}
+        />
+      </View>
+    );
+    /*
     return (
       <InputBox
         key={`${i}-InputBox`}
@@ -134,46 +218,16 @@ class CiePinpad extends React.PureComponent<Props, State> {
         isPopulated={this.state.value.length - 1 >= item}
       />
     );
+    */
   };
 
   public render() {
     return (
       <View>
-        <View>
-          <TextInput
-            ref={ref => {
-              this.setState({
-                textInputRef: ref
-              });
-            }}
-            autoFocus={true}
-            keyboardType="number-pad"
-            onKeyPress={({ nativeEvent }) => {
-              if (nativeEvent.key === "Backspace") {
-                this.deleteLastDigit();
-              }
-            }}
-            onChangeText={text => {
-              if (text.length > 0) {
-                this.handlePinDigit(text);
-              }
-            }}
-            caretHidden={true}
-            style={styles.input}
-          />
-          <TouchableWithoutFeedback
-            onPress={() => {
-              if (this.state.textInputRef !== null) {
-                this.state.textInputRef.focus();
-              }
-            }}
-          >
-            <View style={styles.placeholderContainer}>
-              {ARRAY_PIN.map((item, i) => {
-                return this.inputBoxGenerator(item, i);
-              })}
-            </View>
-          </TouchableWithoutFeedback>
+        <View style={styles.placeholderContainer}>
+          {ARRAY_PIN.map((item, i) => {
+            return this.inputBoxGenerator(item, i);
+          })}
         </View>
         <View spacer={true} />
         <Text>{this.props.description}</Text>

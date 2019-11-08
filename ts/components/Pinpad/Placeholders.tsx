@@ -1,9 +1,10 @@
 import { View } from "native-base";
 import * as React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, ViewStyle } from "react-native";
 
 interface PlaceholderProps {
   color: string;
+  placeHolderStyle?: ViewStyle;
 }
 
 const styles = StyleSheet.create({
@@ -32,10 +33,13 @@ export const Bullet: React.SFC<PlaceholderProps> = ({ color }) => (
   </View>
 );
 
-export const Baseline: React.SFC<PlaceholderProps> = ({ color }) => (
+export const Baseline: React.SFC<PlaceholderProps> = ({
+  color,
+  placeHolderStyle
+}) => (
   <View
     style={[
-      styles.placeholder,
+      [styles.placeholder, placeHolderStyle],
       styles.placeholderBaseline,
       { borderBottomColor: color }
     ]}
