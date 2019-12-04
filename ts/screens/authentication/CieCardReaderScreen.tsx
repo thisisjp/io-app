@@ -1,7 +1,7 @@
 import { Millisecond } from "italia-ts-commons/lib/units";
 import { Button, Content, H2, Text, View } from "native-base";
 import * as React from "react";
-import { Image, StyleSheet } from "react-native";
+import { Image, StyleSheet, Animated, Easing } from "react-native";
 import ProgressCircle from "react-native-progress-circle";
 import { NavigationScreenProp, NavigationState } from "react-navigation";
 import AnimatedRing from "../../components/animations/AnimatedRing";
@@ -74,34 +74,33 @@ type State = {
  *  This screen shown while reading the card
  */
 class CieCardReaderScreen extends React.Component<Props, State> {
+  private progressAnimation: Animated.CompositeAnimation;
+  private progressAnimatedValue: Animated.Value;
+
   constructor(props: Props) {
     super(props);
     this.state = {
       progressBarValue: 0,
       isReadInterrupted: false
     };
-    // Start an interval to increment progress bar
-    const interval = setInterval(() => {
-      // After 60% decrease velocity
-      if (this.state.progressBarValue < 60) {
-        this.setState({
-          progressBarValue: this.state.isReadInterrupted
-            ? this.state.progressBarValue
-            : this.state.progressBarValue + 0.5
-        });
-      } else {
-        this.setState({
-          progressBarValue: this.state.isReadInterrupted
-            ? this.state.progressBarValue
-            : this.state.progressBarValue + 0.2
-        });
-      }
-      // Stop interval
-      if (this.state.progressBarValue >= 100 || this.state.isReadInterrupted) {
-        clearInterval(interval);
-      }
-    }, stepTimeProgress);
-
+    this.progressAnimatedValue = new Animated.Value(0);
+    this.progressAnimatedValue.addListener(anim => {
+      this.setState({ progressBarValue: anim.value });
+    });
+    this.progressAnimation = Animated.sequence([
+      // from 0 to 60 in 10 secs
+      Animated.timing(this.progressAnimatedValue, {
+        toValue: 60,
+        easing: Easing.linear,
+        duration: 10000
+      }),
+      // from 60 to 100 in 12 secs
+      Animated.timing(this.progressAnimatedValue, {
+        toValue: 100,
+        easing: Easing.linear,
+        duration: 12000
+      })
+    ]);
     // TODO: remove this!!
     // Simulates user interruption
     // tslint:disable-next-line: no-commented-code
@@ -110,6 +109,10 @@ class CieCardReaderScreen extends React.Component<Props, State> {
         isReadInterrupted: true
       });
     }, 5000); */
+  }
+  public componentDidMount() {
+    // when card is reading start animation
+    this.progressAnimation.start();
   }
 
   public render(): React.ReactNode {
