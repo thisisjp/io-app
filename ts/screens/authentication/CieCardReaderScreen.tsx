@@ -137,7 +137,7 @@ class CieCardReaderScreen extends React.Component<Props, State> {
       this.setState({ progressBarValue: 0 });
       this.progressAnimation.start();
     }
-    // if we are not in reading the card, stop the animation
+    // if we are not reading the card, stop the animation
     if (
       prevState.readingState === "reading" &&
       this.state.readingState !== "reading"
