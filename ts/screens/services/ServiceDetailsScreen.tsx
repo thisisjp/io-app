@@ -216,6 +216,14 @@ class ServiceDetailsScreen extends React.Component<Props, State> {
     this.setState({ isMarkdownLoaded: true });
   };
 
+  /**
+   * return true if markdown is loaded (description is rendered inside a markodown component)
+   * or if description field is undefined
+   *
+   * this behavior is due to markdown loading: it could happen some items overlapped while the
+   * markdown content is loading. To avoid this, we wait the loading ends and then the items will
+   * be displayed
+   */
   private canRenderItems = () => {
     const potServiceMetadata = this.props.servicesMetadataById[this.serviceId];
     return (
