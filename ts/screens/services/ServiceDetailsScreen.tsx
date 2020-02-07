@@ -55,9 +55,10 @@ type Props = ReturnType<typeof mapStateToProps> &
   ReduxProps &
   NavigationInjectedProps<NavigationParams>;
 
-interface State {
+type State = {
   uiEnabledChannels: EnabledChannels;
-}
+  isMarkdownLoaded: boolean;
+};
 
 const styles = StyleSheet.create({
   infoHeader: {
@@ -154,8 +155,10 @@ class ServiceDetailsScreen extends React.Component<Props, State> {
       uiEnabledChannels: getEnabledChannelsForService(
         this.props.profile,
         this.serviceId
-      )
+      ),
+      isMarkdownLoaded: false
     };
+    this.onMarkdownLoaded = this.onMarkdownLoaded.bind(this);
   }
 
   public componentWillReceiveProps(nextProps: Props) {
@@ -209,48 +212,72 @@ class ServiceDetailsScreen extends React.Component<Props, State> {
     );
   }
 
+  private onMarkdownLoaded = () => {
+    this.setState({ isMarkdownLoaded: true });
+  };
+
+  private canRenderItems = () => {
+    const potServiceMetadata = this.props.servicesMetadataById[this.serviceId];
+    return (
+      this.state.isMarkdownLoaded ||
+      (potServiceMetadata &&
+        pot.map(
+          potServiceMetadata,
+          serviceMetadata => serviceMetadata && serviceMetadata.description
+        ))
+    );
+  };
+
   private renderItems = (potServiceMetadata: ServiceMetadataState) => {
     if (pot.isSome(potServiceMetadata) && potServiceMetadata.value) {
       const metadata = potServiceMetadata.value;
       return (
         <React.Fragment>
           {metadata.description && (
-            <Markdown animated={true}>{metadata.description}</Markdown>
+            <Markdown animated={true} onLoadEnd={this.onMarkdownLoaded}>
+              {metadata.description}
+            </Markdown>
           )}
           {metadata.description && <View spacer={true} large={true} />}
-          {metadata.tos_url &&
-            renderInformationLinkRow(
-              I18n.t("services.tosLink"),
-              metadata.tos_url
-            )}
-          {metadata.privacy_url &&
-            renderInformationLinkRow(
-              I18n.t("services.privacyLink"),
-              metadata.privacy_url
-            )}
-          {(metadata.app_android || metadata.app_ios || metadata.web_url) && (
-            <H4 style={styles.infoHeader}>
-              {I18n.t("services.otherAppsInfo")}
-            </H4>
+          {this.canRenderItems && (
+            <View>
+              {metadata.tos_url &&
+                renderInformationLinkRow(
+                  I18n.t("services.tosLink"),
+                  metadata.tos_url
+                )}
+              {metadata.privacy_url &&
+                renderInformationLinkRow(
+                  I18n.t("services.privacyLink"),
+                  metadata.privacy_url
+                )}
+              {(metadata.app_android ||
+                metadata.app_ios ||
+                metadata.web_url) && (
+                <H4 style={styles.infoHeader}>
+                  {I18n.t("services.otherAppsInfo")}
+                </H4>
+              )}
+              {metadata.web_url &&
+                renderInformationRow(
+                  I18n.t("services.otherAppWeb"),
+                  metadata.web_url,
+                  metadata.web_url
+                )}
+              {metadata.app_ios &&
+                renderInformationImageRow(
+                  I18n.t("services.otherAppIos"),
+                  metadata.app_ios,
+                  require("../../../img/badges/app-store-badge.png")
+                )}
+              {metadata.app_android &&
+                renderInformationImageRow(
+                  I18n.t("services.otherAppAndroid"),
+                  metadata.app_android,
+                  require("../../../img/badges/google-play-badge.png")
+                )}
+            </View>
           )}
-          {metadata.web_url &&
-            renderInformationRow(
-              I18n.t("services.otherAppWeb"),
-              metadata.web_url,
-              metadata.web_url
-            )}
-          {metadata.app_ios &&
-            renderInformationImageRow(
-              I18n.t("services.otherAppIos"),
-              metadata.app_ios,
-              require("../../../img/badges/app-store-badge.png")
-            )}
-          {metadata.app_android &&
-            renderInformationImageRow(
-              I18n.t("services.otherAppAndroid"),
-              metadata.app_android,
-              require("../../../img/badges/google-play-badge.png")
-            )}
         </React.Fragment>
       );
     }
@@ -258,7 +285,11 @@ class ServiceDetailsScreen extends React.Component<Props, State> {
   };
 
   private renderContactItems = (potServiceMetadata: ServiceMetadataState) => {
-    if (pot.isSome(potServiceMetadata) && potServiceMetadata.value) {
+    if (
+      this.canRenderItems &&
+      pot.isSome(potServiceMetadata) &&
+      potServiceMetadata.value
+    ) {
       const metadata = potServiceMetadata.value;
       return (
         <React.Fragment>
