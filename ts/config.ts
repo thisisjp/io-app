@@ -1,7 +1,6 @@
 // Main config file. Mostly read the configuration from .env files
 
 import * as t from "io-ts";
-
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { Millisecond, Second } from "italia-ts-commons/lib/units";
