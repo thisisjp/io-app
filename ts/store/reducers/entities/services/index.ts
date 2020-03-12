@@ -68,6 +68,9 @@ const reducer = combineReducers<ServicesState, Action>({
 
 export const servicesSelector = (state: GlobalState) => state.entities.services;
 
+export const servicesByOrganizationFiscalCodeSelector = (state: GlobalState) =>
+  state.entities.services.byOrgFiscalCode;
+
 /**
  * The function returns:
  * - pot.none if visibleServices is not loaded or the related services load is not yet started
@@ -208,7 +211,6 @@ const getServices = (
       const organizationName = organizations[fiscalCode] || fiscalCode;
       const organizationFiscalCode = fiscalCode;
       const serviceIdsForOrg = services.byOrgFiscalCode[fiscalCode] || [];
-
       const data = serviceIdsForOrg
         .map(id => services.byId[id])
         .filter(
