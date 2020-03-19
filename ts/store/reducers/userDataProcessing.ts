@@ -13,7 +13,7 @@ import { GlobalState } from "./types";
 
 export type UserDataProcessingState = {
   [key in keyof typeof UserDataProcessingChoiceEnum]: pot.Pot<
-    UserDataProcessing,
+    UserDataProcessing | undefined,
     Error
   >
 };
