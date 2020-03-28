@@ -1,9 +1,9 @@
 /**
  * A component to show the main screen of the Profile section
  */
-import { H3, List, ListItem, Text, Toast, View } from "native-base";
+import { H3, List, ListItem, Text, Toast, View, Content } from "native-base";
 import * as React from "react";
-import { Alert, Platform, ScrollView, StyleSheet } from "react-native";
+import { Alert, Platform, ScrollView, StyleSheet, Image } from "react-native";
 import DeviceInfo from "react-native-device-info";
 import {
   NavigationEvents,
@@ -48,6 +48,8 @@ import { GlobalState } from "../../store/reducers/types";
 import customVariables from "../../theme/variables";
 import { clipboardSetStringWithFeedback } from "../../utils/clipboard";
 import { setStatusBarColorAndBackground } from "../../utils/statusBar";
+import JsBarcode from "jsbarcode";
+import WebView, { WebViewMessageEvent } from "react-native-webview";
 
 type OwnProps = Readonly<{
   navigation: NavigationScreenProp<NavigationState>;
@@ -61,6 +63,7 @@ type Props = OwnProps &
 type State = {
   showPagoPAtestSwitch: boolean;
   numberOfTaps: number;
+  dataImage: string[];
 };
 
 const styles = StyleSheet.create({
@@ -106,6 +109,33 @@ const getAppLongVersion = () => {
   return `${DeviceInfo.getVersion()}${buildNumber}`;
 };
 
+const html = `<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/jsbarcode/3.3.20/JsBarcode.all.min.js"></script>
+    <script>
+        function getData(text){
+            var canvas = document.createElement("canvas");
+            JsBarcode(canvas, text, {format: "CODE39"});
+            const value =  canvas.toDataURL("image/png");
+            window.ReactNativeWebView.postMessage(value);
+        }
+    </script>
+</head>
+<body>
+    <div style="margin-top:200px;">
+    <svg id="code128"></svg>
+    <script>
+        getData("HELLO");
+        getData("WORLD");
+        getData("MATTEO");
+        getData("BOSCHI");
+    </script>
+    </div>
+    <div>CIAO</div>
+</body>
+</html>`;
+
 class ProfileMainScreen extends React.PureComponent<Props, State> {
   private navListener?: NavigationEventSubscription;
 
@@ -113,7 +143,8 @@ class ProfileMainScreen extends React.PureComponent<Props, State> {
     super(props);
     this.state = {
       showPagoPAtestSwitch: false,
-      numberOfTaps: 0
+      numberOfTaps: 0,
+      dataImage: []
     };
     this.handleClearCachePress = this.handleClearCachePress.bind(this);
   }
@@ -304,8 +335,45 @@ class ProfileMainScreen extends React.PureComponent<Props, State> {
     }
   };
 
+  private testQrCoded = () => {
+    JsBarcode("#barcode", "1234", {
+      format: "pharmacode",
+      lineColor: "#0aa",
+      width: 4,
+      height: 40,
+      displayValue: false
+    });
+  };
+
+  private handleOnMessage = (messagge: WebViewMessageEvent) => {
+    const newData = [...this.state.dataImage, messagge.nativeEvent.data];
+    this.setState({ dataImage: newData });
+  };
+
   // tslint:disable-next-line: no-big-function
   public render() {
+    return (
+      <Content style={{ flex: 1, flexDirection: "column" }}>
+        <WebView
+          originWhitelist={["*"]}
+          javaScriptEnabled={true}
+          style={{ height: 300 }}
+          source={{ html, baseUrl: "" }}
+          onMessage={this.handleOnMessage}
+        />
+        {this.state.dataImage.map((di, idx) => {
+          return (
+            <Image
+              key={idx}
+              source={{ uri: di }}
+              resizeMode={"contain"}
+              style={{ width: 300, height: 200 }}
+            />
+          );
+        })}
+      </Content>
+    );
+
     const {
       navigation,
       backendInfo,
@@ -390,6 +458,7 @@ class ProfileMainScreen extends React.PureComponent<Props, State> {
 
             {this.props.isDebugModeEnabled && (
               <React.Fragment>
+                {this.debugListItem("TEST QR CODE", this.testQrCoded, false)}
                 {this.debugListItem(
                   `${I18n.t("profile.main.appVersion")} ${getAppLongVersion()}`,
                   () => {

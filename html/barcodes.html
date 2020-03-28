@@ -1,0 +1,26 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/jsbarcode/3.3.20/JsBarcode.all.min.js"></script>
+    <script>
+        function getData(text){
+            var canvas = document.createElement("canvas");
+            JsBarcode(canvas, text, {format: "CODE39"});
+            const value =  canvas.toDataURL("image/png");
+            window.ReactNativeWebView.postMessage(value);
+        }
+    </script>
+</head>
+<body>
+    <div style="margin-top:200px;">
+    <svg id="code128"></svg>
+    <script>
+        getData("HELLO");
+        getData("WORLD");
+        getData("MATTEO");
+        getData("BOSCHI");
+    </script>
+    </div>
+    <button onclick="getData();">CIAO</button>
+</body>
+</html>
