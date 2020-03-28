@@ -49,6 +49,7 @@ type Props = NavigationScreenProps &
 
 type State = {
   currentTab: number;
+  test: number;
 };
 
 const styles = StyleSheet.create({
@@ -103,7 +104,8 @@ class MessagesHomeScreen extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      currentTab: 0
+      currentTab: 0,
+      test: 0
     };
   }
 
@@ -114,12 +116,13 @@ class MessagesHomeScreen extends React.PureComponent<Props, State> {
   ];
 
   // It create a mostly 2 states output: it value is mostly 0 or HEADER_HEIGHT
-  private getHeaderHeight = (): Animated.AnimatedInterpolation =>
-    this.animatedTabScrollPositions[this.state.currentTab].interpolate({
-      inputRange: [0, HEADER_HEIGHT, HEADER_HEIGHT + 1, 3000],
-      outputRange: [HEADER_HEIGHT, HEADER_HEIGHT, 0, 0],
-      extrapolate: "extend"
+  private getHeaderHeight = (): Animated.AnimatedInterpolation => {
+    return this.animatedTabScrollPositions[this.state.currentTab].interpolate({
+      inputRange: [0, HEADER_HEIGHT],
+      outputRange: [0, 1],
+      extrapolate: "clamp"
     });
+  };
 
   private onRefreshMessages = () => {
     this.props.refreshMessages(
@@ -146,7 +149,6 @@ class MessagesHomeScreen extends React.PureComponent<Props, State> {
 
   public render() {
     const { isSearchEnabled } = this.props;
-
     return (
       <TopScreenComponent
         contextualHelpMarkdown={contextualHelpMarkdown}
