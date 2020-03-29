@@ -50,6 +50,8 @@ import { clipboardSetStringWithFeedback } from "../../utils/clipboard";
 import { setStatusBarColorAndBackground } from "../../utils/statusBar";
 import JsBarcode from "jsbarcode";
 import WebView, { WebViewMessageEvent } from "react-native-webview";
+import Share from "react-native-share";
+import { RTron } from "../../boot/configureStoreAndPersistor";
 
 type OwnProps = Readonly<{
   navigation: NavigationScreenProp<NavigationState>;
@@ -63,7 +65,7 @@ type Props = OwnProps &
 type State = {
   showPagoPAtestSwitch: boolean;
   numberOfTaps: number;
-  dataImage: string[];
+  imageData?: string;
 };
 
 const styles = StyleSheet.create({
@@ -111,30 +113,71 @@ const getAppLongVersion = () => {
 
 const html = `<html>
 <head>
-    <meta charset="UTF-8">
-    <script src="https://cdn.jsdelivr.net/jsbarcode/3.3.20/JsBarcode.all.min.js"></script>
-    <script>
-        function getData(text){
-            var canvas = document.createElement("canvas");
-            JsBarcode(canvas, text, {format: "CODE39"});
-            const value =  canvas.toDataURL("image/png");
-            window.ReactNativeWebView.postMessage(value);
-        }
-    </script>
+  <meta charset="UTF-8" />
+  <script src="https://cdn.jsdelivr.net/jsbarcode/3.3.20/JsBarcode.all.min.js"></script>
+  <script src="https://unpkg.com/merge-images"></script>
+  <script>
+    var barCodesB64 = [];
+    var mergedBarCodesB64 = "";
+    var imageOption = { width: 1000, height: 2000, format: "image/png" };
+
+    function getData(text) {
+      var canvas = document.createElement("canvas");
+      JsBarcode(canvas, text, {
+        format: "CODE39",
+        marginLeft: 10,
+        marginRight: 10,
+        fontSize: 30,
+        height: 180,
+        width: 4,
+        flat: true
+      });
+
+      const value = canvas.toDataURL("image/png");
+      barCodesB64 = [...barCodesB64, value];
+    }
+
+    function mergeBarCodes() {
+      var images = barCodesB64.map((bc, idx) => {
+        return { src: bc, x: 0, y: 230 * idx };
+      });
+      mergeImages(images, imageOption).then(b64 => {
+        mergedBarCodesB64 = b64;
+
+        var canvas = document.getElementById("c");
+
+        var ctx = canvas.getContext("2d");
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        var image = new Image(imageOption.width, imageOption.height);
+        image.onload = function() {
+          ctx.drawImage(image, 0, 0);
+          window.ReactNativeWebView.postMessage(canvas.toDataURL("image/jpeg"));
+        };
+        image.src = mergedBarCodesB64;
+        
+      });
+    }
+  </script>
 </head>
 <body>
-    <div style="margin-top:200px;">
+  <div style="margin-top:200px;">
     <svg id="code128"></svg>
     <script>
-        getData("HELLO");
-        getData("WORLD");
-        getData("MATTEO");
-        getData("BOSCHI");
+      getData("TEST1");
+      getData("TEST1234");
+      getData("TEST1234567");
+      getData("TEST12345678910");
+      getData("TEST1234567891011");
+      getData("TEST123456789101112");
+      mergeBarCodes();
     </script>
-    </div>
-    <div>CIAO</div>
+    <canvas id="c" height="2000" width="1000"></canvas>
+  </div>
 </body>
-</html>`;
+</html>
+`;
 
 class ProfileMainScreen extends React.PureComponent<Props, State> {
   private navListener?: NavigationEventSubscription;
@@ -143,8 +186,7 @@ class ProfileMainScreen extends React.PureComponent<Props, State> {
     super(props);
     this.state = {
       showPagoPAtestSwitch: false,
-      numberOfTaps: 0,
-      dataImage: []
+      numberOfTaps: 0
     };
     this.handleClearCachePress = this.handleClearCachePress.bind(this);
   }
@@ -345,9 +387,14 @@ class ProfileMainScreen extends React.PureComponent<Props, State> {
     });
   };
 
-  private handleOnMessage = (messagge: WebViewMessageEvent) => {
-    const newData = [...this.state.dataImage, messagge.nativeEvent.data];
-    this.setState({ dataImage: newData });
+  private handleOnMessage = (message: WebViewMessageEvent) => {
+    if (
+      message.nativeEvent.data !== undefined &&
+      message.nativeEvent.data.length > 0
+    ) {
+      RTron.log(message.nativeEvent.data);
+      this.setState({ imageData: message.nativeEvent.data });
+    }
   };
 
   // tslint:disable-next-line: no-big-function
@@ -357,20 +404,22 @@ class ProfileMainScreen extends React.PureComponent<Props, State> {
         <WebView
           originWhitelist={["*"]}
           javaScriptEnabled={true}
-          style={{ height: 300 }}
+          style={{ height: 2 }}
           source={{ html, baseUrl: "" }}
           onMessage={this.handleOnMessage}
         />
-        {this.state.dataImage.map((di, idx) => {
-          return (
-            <Image
-              key={idx}
-              source={{ uri: di }}
-              resizeMode={"contain"}
-              style={{ width: 300, height: 200 }}
-            />
-          );
-        })}
+        {this.state.imageData && (
+          <Image
+            source={{ uri: this.state.imageData }}
+            resizeMode={"contain"}
+            style={{ width: 600, height: 1000 }}
+          />
+        )}
+        {this.debugListItem(
+          `Share`,
+          async () => await Share.open({ url: this.state.imageData }),
+          false
+        )}
       </Content>
     );
 
