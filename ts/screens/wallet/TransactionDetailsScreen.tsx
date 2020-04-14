@@ -13,7 +13,7 @@ import { fromNullable } from "fp-ts/lib/Option";
 import * as pot from "italia-ts-commons/lib/pot";
 import { Content, H1, Text, View } from "native-base";
 import * as React from "react";
-import { Image, StyleSheet } from "react-native";
+import { BackHandler, Image, StyleSheet } from "react-native";
 import { Col, Grid, Row } from "react-native-easy-grid";
 import { NavigationEvents, NavigationInjectedProps } from "react-navigation";
 import { connect } from "react-redux";
@@ -119,11 +119,21 @@ const styles = StyleSheet.create({
 });
 
 const contextualHelpMarkdown: ContextualHelpPropsMarkdown = {
-  title: "wallet.detailsTransaction.contextualHelpTitle",
+  title: "wallet.transactionDetails",
   body: "wallet.detailsTransaction.contextualHelpContent"
 };
 
 class TransactionDetailsScreen extends React.Component<Props> {
+  public componentDidMount() {
+    BackHandler.addEventListener("hardwareBackPress", this.handleBackPress);
+  }
+
+  public componentWillUnmount() {
+    BackHandler.removeEventListener("hardwareBackPress", this.handleBackPress);
+  }
+  // On back button navigate to wallet home (android)
+  private handleBackPress = () => this.props.navigateToWalletHome();
+
   private displayedWallet(transactionWallet: Wallet | undefined) {
     return transactionWallet ? (
       <RotatedCards cardType="Preview" wallets={[transactionWallet]} />
@@ -288,9 +298,9 @@ class TransactionDetailsScreen extends React.Component<Props> {
             <View spacer={true} large={true} />
             {this.labelValueRow(
               I18n.t("wallet.total"),
-              <H5 style={styles.value}>{totalAmount}</H5>
+              <H5 style={styles.value}>{`€ ${totalAmount}`}</H5>
             )}
-            {this.labelValueRow(I18n.t("wallet.payAmount"), amount)}
+            {this.labelValueRow(I18n.t("wallet.payAmount"), `€ ${amount}`)}
             <TouchableDefaultOpacity onPress={this.showHelp}>
               {this.labelValueRow(
                 <Text>
@@ -302,7 +312,7 @@ class TransactionDetailsScreen extends React.Component<Props> {
                     {I18n.t("wallet.why")}
                   </Text>
                 </Text>,
-                fee
+                `€ ${fee}`
               )}
             </TouchableDefaultOpacity>
             {this.labelValueRow(

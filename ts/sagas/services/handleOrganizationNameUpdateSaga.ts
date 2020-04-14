@@ -1,15 +1,12 @@
 import * as pot from "italia-ts-commons/lib/pot";
-import { Tuple2 } from "italia-ts-commons/lib/tuples";
 import { SagaIterator } from "redux-saga";
 import { put, select } from "redux-saga/effects";
 import { ServicePublic } from "../../../definitions/backend/ServicePublic";
 import { updateOrganizations } from "../../store/actions/organizations";
-import { removeServiceTuples } from "../../store/actions/services";
 import {
   organizationNamesByFiscalCodeSelector,
   OrganizationNamesByFiscalCodeState
 } from "../../store/reducers/entities/organizations/organizationsByFiscalCodeReducer";
-import { servicesByOrganizationFiscalCodeSelector } from "../../store/reducers/entities/services";
 import {
   visibleServicesSelector,
   VisibleServicesState
@@ -33,9 +30,7 @@ export function* handleOrganizationNameUpdateSaga(
   if (organizations) {
     const fc = service.organization_fiscal_code;
 
-    const serviceId = service.service_id;
-
-    // The organization in stored if the corresponding fiscal code has no maches among those stored
+    // The organization is stored if the corresponding fiscal code has no maches among those stored
     const organization = organizations[fc];
     if (!organization) {
       yield put(updateOrganizations(service));
@@ -52,32 +47,6 @@ export function* handleOrganizationNameUpdateSaga(
     // and the name has been updated
     if (isVisible && organization !== service.organization_name) {
       yield put(updateOrganizations(service));
-    }
-    // If the service detail is also loaded get the organization fiscal code
-    const organizationFiscalCode = service.organization_fiscal_code;
-
-    const servicesByOrganizationFiscalCode: ReturnType<
-      typeof servicesByOrganizationFiscalCodeSelector
-    > = yield select(servicesByOrganizationFiscalCodeSelector);
-
-    // check if the same service is associated to an old (now wrong)
-    // organization fiscal code
-    const organizationsIds = Object.keys(
-      servicesByOrganizationFiscalCode
-    ).filter(orgId => {
-      const servicesId = servicesByOrganizationFiscalCode[orgId];
-      return (
-        orgId !== organizationFiscalCode &&
-        servicesId !== undefined &&
-        servicesId.indexOf(serviceId) !== -1
-      );
-    });
-    if (organizationsIds.length > 0) {
-      yield put(
-        removeServiceTuples(
-          organizationsIds.map(orgId => Tuple2(serviceId, orgId))
-        )
-      );
     }
   }
 }
