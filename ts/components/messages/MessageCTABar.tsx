@@ -368,13 +368,6 @@ class MessageCTABar extends React.PureComponent<Props> {
     return null;
   };
 
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      isEventInDeviceCalendar: false
-    };
-  }
-
   private maybeMessagePaymentExpirationInfo = fromNullable(
     this.props.message.content.payment_data
   ).map(paymentData =>
