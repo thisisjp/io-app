@@ -3,6 +3,8 @@ import { Text, View } from "native-base";
 import * as React from "react";
 import { Image, Modal, StyleSheet } from "react-native";
 import I18n from "../../i18n";
+import { Millisecond } from "italia-ts-commons/lib/units";
+import { format } from "date-fns";
 
 type Props = {
   // milliseconds
@@ -35,13 +37,8 @@ const tooManyAttemptsText = I18n.t("identification.fail.tooManyAttempts");
 
 // Convert milliseconds to a textual representation based on mm:ss
 
-const fromMillisecondsToTimeRepresentation = (milliseconds: number): string => {
-  const roundedMs = 1000 * Math.round(milliseconds / 1000);
-  const minutes = Math.floor(roundedMs / 60000).toString();
-  const seconds = (roundedMs % 60000) / 1000;
-
-  return minutes + ":" + (seconds < 10 ? "0" : "") + seconds.toFixed(0);
-};
+const fromMillisecondsToTimeRepresentation = (ms: Millisecond): string =>
+  format(new Date(ms), "mm:ss");
 
 /*
   This modal screen is displayed when too many wrong pin attempts have been made.
@@ -51,7 +48,7 @@ const fromMillisecondsToTimeRepresentation = (milliseconds: number): string => {
 export const IdentificationLockModal: React.FunctionComponent<
   Props
 > = props => {
-  const minuteSeconds = fromNullable(props.countdown).fold(
+  const minuteSeconds = fromNullable(props.countdown as Millisecond).fold(
     "0:00",
     fromMillisecondsToTimeRepresentation
   );

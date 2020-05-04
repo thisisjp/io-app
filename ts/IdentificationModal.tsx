@@ -29,6 +29,8 @@ import { getFingerprintSettings } from "./sagas/startup/checkAcknowledgedFingerp
 import { fromNullable } from "fp-ts/lib/Option";
 import { IdentificationLockModal } from "./screens/modal/IdentificationLockModal";
 import { BiometryPrintableSimpleType } from "./screens/onboarding/FingerprintScreen";
+import { RTron } from "./boot/configureStoreAndPersistor";
+import { maxAttempts, freeAttempts } from "./store/reducers/identification";
 
 type Props = ReturnType<typeof mapStateToProps> & ReduxProps;
 
@@ -135,13 +137,16 @@ class IdentificationModal extends React.PureComponent<Props, State> {
   private idCheckCanInsertPin?: number;
 
   private checkCanInsertPin = () => {
+    RTron.log("checkCanInsertPin");
     const identificationFailState = this.props.identificationFailState;
     const now = new Date();
     fromNullable(identificationFailState).map(errorData => {
+      const canInsertPinTooManyAttempts = errorData.nextLegalAttempt <= now;
       this.setState({
-        canInsertPinTooManyAttempts: errorData.nextLegalAttempt <= now,
+        canInsertPinTooManyAttempts,
         countdown: errorData.nextLegalAttempt.getTime() - now.getTime()
       });
+      return canInsertPinTooManyAttempts;
     });
   };
 
@@ -162,16 +167,16 @@ class IdentificationModal extends React.PureComponent<Props, State> {
       // if the biometric is not available unlock the unlock code insertion
       this.setState({ canInsertPinBiometry: true });
     }
-
-    // tslint:disable-next-line: no-object-mutation
-    this.idCheckCanInsertPin = setInterval(this.checkCanInsertPin, 100);
-    this.checkCanInsertPin();
+    fromNullable(this.props.identificationFailState).map(fail => {
+      // we have to update the time remaining for the next attempt
+      if (fail.remainingAttempts < maxAttempts - freeAttempts) {
+        // tslint:disable-next-line: no-object-mutation
+        this.idCheckCanInsertPin = setInterval(this.checkCanInsertPin, 100);
+      }
+    });
   }
 
   public componentWillUnmount() {
-    if (this.idCheckCanInsertPin !== undefined) {
-      clearTimeout(this.idCheckCanInsertPin);
-    }
     clearInterval(this.idCheckCanInsertPin);
   }
 
@@ -229,7 +234,7 @@ class IdentificationModal extends React.PureComponent<Props, State> {
     }
   }
 
-  public componentDidUpdate(prevProps: Props) {
+  public componentDidUpdate(prevProps: Props, prevState: State) {
     // When app becomes active from background the state of TouchID support
     // must be updated, because it might be switched off.
     if (
@@ -242,6 +247,25 @@ class IdentificationModal extends React.PureComponent<Props, State> {
         updateBiometrySupportProp:
           prevProps.appState !== "active" && this.props.appState === "active"
       });
+    }
+    if (
+      prevProps.identificationFailState !==
+        this.props.identificationFailState &&
+      this.props.identificationFailState !== undefined
+    ) {
+      const fail = this.props.identificationFailState;
+      // we have to update the time remaining for the next attempt
+      if (fail.remainingAttempts < maxAttempts - freeAttempts) {
+        // tslint:disable-next-line: no-object-mutation
+        this.idCheckCanInsertPin = setInterval(this.checkCanInsertPin, 100);
+      }
+    }
+    if (
+      !prevState.canInsertPinTooManyAttempts &&
+      this.state.canInsertPinTooManyAttempts
+    ) {
+      // stop checking if user can insert pin
+      clearInterval(this.idCheckCanInsertPin);
     }
   }
 

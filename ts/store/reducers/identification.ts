@@ -11,8 +11,9 @@ import {
   identificationSuccess
 } from "../actions/identification";
 import { Action } from "../actions/types";
+import { GlobalState } from "./types";
 
-const freeAttempts = 4;
+export const freeAttempts = 4;
 // in seconds
 const deltaTimespanBetweenAttempts = 30;
 
@@ -68,6 +69,9 @@ export type IdentificationState = {
 };
 
 export type PersistedIdentificationState = IdentificationState & PersistPartial;
+
+export const identificationFailSelector = (state: GlobalState) =>
+  fromNullable(state.identification.fail);
 
 const INITIAL_PROGRESS_STATE: IdentificationUnidentifiedState = {
   kind: "unidentified"
