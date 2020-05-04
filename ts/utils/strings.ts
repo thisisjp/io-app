@@ -41,7 +41,7 @@ export function capitalize(text: string, separator: string = " ") {
 }
 
 /**
- * Convert the EnteBEneficiario content type in a readable string
+ * Convert the EnteBeneficiario content type in a readable string
  * @param e organization data
  */
 export const formatTextRecipient = (e: EnteBeneficiario): string => {
