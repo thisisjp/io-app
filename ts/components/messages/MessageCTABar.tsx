@@ -392,8 +392,6 @@ class MessageCTABar extends React.PureComponent<Props, State> {
       return null;
     }
 
-    const calendarIconComponentSize = small ? 32 : 40;
-
     const isPaymentExpiring =
       maybeMessagePaymentExpirationInfo.isSome() &&
       maybeMessagePaymentExpirationInfo.value.kind === "EXPIRABLE" &&
@@ -401,8 +399,7 @@ class MessageCTABar extends React.PureComponent<Props, State> {
 
     return (
       <CalendarIconComponent
-        height={calendarIconComponentSize}
-        width={calendarIconComponentSize}
+        small={small}
         month={capitalize(formatDateAsMonth(due_date))}
         day={formatDateAsDay(due_date)}
         backgroundColor={
@@ -747,8 +744,6 @@ class MessageCTABar extends React.PureComponent<Props, State> {
         return (
           <View style={[styles.bottomContainer, styles.bottomContainerExpired]}>
             <CalendarIconComponent
-              height={40}
-              width={40}
               month={formatDateAsMonth(dueDate).toUpperCase()}
               day={formatDateAsDay(dueDate)}
               backgroundColor={variables.colorWhite}
