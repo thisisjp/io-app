@@ -9,9 +9,6 @@ type Props = {
   pinLength: number;
   onPinChanged: (pin: string) => void;
   onSubmit: (pin: string) => void;
-};
-
-type State = {
   pin?: string;
 };
 
@@ -56,15 +53,12 @@ const sideMargin = 8;
  * A customized CodeInput component.
  */
 
-class CiePinpad extends React.PureComponent<Props, State> {
+class CiePinpad extends React.PureComponent<Props> {
   private hiddenInput?: TextInput | null;
 
   constructor(props: Props) {
     super(props);
     this.inputBoxGenerator = this.inputBoxGenerator.bind(this);
-    this.state = {
-      pin: undefined
-    };
   }
 
   private handleOnChangeText = (text: string) => {
@@ -82,8 +76,8 @@ class CiePinpad extends React.PureComponent<Props, State> {
   private handleOnSubmit = () => {
     {
       // if pin is full filled
-      if (this.state.pin && this.state.pin.length === this.props.pinLength) {
-        this.props.onSubmit(this.state.pin);
+      if (this.props.pin && this.props.pin.length === this.props.pinLength) {
+        this.props.onSubmit(this.props.pin);
       }
     }
   };
@@ -118,12 +112,12 @@ class CiePinpad extends React.PureComponent<Props, State> {
           onFocus={this.handleOnFocus}
           autoFocus={false}
           caretHidden={true} // The caret is disabled to avoid confusing the user
-          value={this.state.pin && i < this.state.pin.length ? "●" : ""}
+          value={this.props.pin && i < this.props.pin.length ? "●" : ""}
         />
         <Baseline
           color={
             // The color is based on the current box
-            !this.state.pin || i >= this.state.pin.length
+            !this.props.pin || i >= this.props.pin.length
               ? variables.brandLightGray
               : variables.brandDarkestGray
           }
@@ -148,6 +142,7 @@ class CiePinpad extends React.PureComponent<Props, State> {
             this.hiddenInput = c;
           }}
           maxLength={this.props.pinLength}
+          value={this.props.pin}
           caretHidden={true}
           onChangeText={this.handleOnChangeText}
           autoFocus={true}
