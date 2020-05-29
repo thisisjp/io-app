@@ -5,9 +5,10 @@ import { View } from "native-base";
 import * as React from "react";
 import { Animated, Dimensions, ScrollView, StyleSheet } from "react-native";
 import variables from "../theme/variables";
+import { LandingCardComponent, LandingCardType } from "./LandingCardComponent";
 
 type Props = {
-  cards: ReadonlyArray<JSX.Element>;
+  cards: ReadonlyArray<LandingCardType>;
 };
 
 const itemWidth = 10; // Radius of the indicators
@@ -22,28 +23,31 @@ const styles = StyleSheet.create({
     height: itemWidth,
     borderRadius: itemWidth / 2
   },
-
   bar: {
     backgroundColor: variables.brandPrimary,
     borderRadius: itemWidth / 2,
     width: itemWidth,
     height: itemWidth
   },
-
   scrollView: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center"
   },
-
   barContainer: {
     zIndex: itemWidth,
     flexDirection: "row"
   }
 });
 
-export const HorizontalScroll: React.SFC<Props> = props => {
+export const HorizontalScroll = (props: Props) => {
   const animVal = new Animated.Value(0);
+
+  const renderCards = () => {
+    return props.cards.map(p => (
+      <LandingCardComponent key={`card-${p.id}`} {...p} />
+    ));
+  };
 
   const barArray = props.cards.map((_, i) => {
     const scrollBarVal = animVal.interpolate({
@@ -85,7 +89,7 @@ export const HorizontalScroll: React.SFC<Props> = props => {
           { nativeEvent: { contentOffset: { x: animVal } } }
         ])}
       >
-        {props.cards}
+        {renderCards()}
       </ScrollView>
 
       <View style={styles.barContainer}>{barArray}</View>

@@ -15,6 +15,8 @@ type Props = {
   content: string;
 };
 
+export type LandingCardType = Props;
+
 const screenWidth = Dimensions.get("screen").width;
 
 const styles = StyleSheet.create({
@@ -33,19 +35,19 @@ const styles = StyleSheet.create({
   }
 });
 
-export const LandingCardComponent: React.SFC<Props> = card => (
+export const LandingCardComponent = (props: Props) => (
   <ScrollView>
     <View style={styles.card}>
-      <Image source={card.image} style={styles.image} />
+      <Image source={props.image} style={styles.image} />
       <View spacer={true} />
       <Grid>
         <Col size={1} />
         <Col size={7}>
           <Text bold={true} alignCenter={true} style={styles.text}>
-            {card.title}{" "}
+            {props.title}
           </Text>
           <View spacer={true} />
-          <Text alignCenter={true}> {card.content} </Text>
+          <Text alignCenter={true}> {props.content} </Text>
           <View spacer={true} />
         </Col>
         <Col size={1} />

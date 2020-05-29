@@ -11,7 +11,7 @@ import { connect } from "react-redux";
 import ButtonDefaultOpacity from "../../components/ButtonDefaultOpacity";
 import { DevScreenButton } from "../../components/DevScreenButton";
 import { HorizontalScroll } from "../../components/HorizontalScroll";
-import { LandingCardComponent } from "../../components/LandingCardComponent";
+import { LandingCardType } from "../../components/LandingCardComponent";
 import BaseScreenComponent, {
   ContextualHelpPropsMarkdown
 } from "../../components/screens/BaseScreenComponent";
@@ -28,7 +28,6 @@ import { isSessionExpiredSelector } from "../../store/reducers/authentication";
 import { isCieSupportedSelector } from "../../store/reducers/cie";
 import { GlobalState } from "../../store/reducers/types";
 import variables from "../../theme/variables";
-import { ComponentProps } from "../../types/react";
 import { isDevEnv } from "../../utils/environment";
 import { showToast } from "../../utils/showToast";
 
@@ -36,9 +35,9 @@ type Props = NavigationInjectedProps &
   ReturnType<typeof mapStateToProps> &
   ReturnType<typeof mapDispatchToProps>;
 
-const getCards = (
+const getLandingCards = (
   isCIEAvailable: boolean
-): ReadonlyArray<ComponentProps<typeof LandingCardComponent>> => [
+): ReadonlyArray<LandingCardType> => [
   {
     id: 5,
     image: require("../../../img/landing/05.png"),
@@ -138,13 +137,6 @@ class LandingScreen extends React.PureComponent<Props> {
         : ROUTES.AUTHENTICATION_SPID_INFORMATION
     );
 
-  private renderCardComponents = () => {
-    const cardProps = getCards(this.props.isCieSupported);
-    return cardProps.map(p => (
-      <LandingCardComponent key={`card-${p.id}`} {...p} />
-    ));
-  };
-
   public render() {
     return (
       <BaseScreenComponent
@@ -158,7 +150,9 @@ class LandingScreen extends React.PureComponent<Props> {
         {isDevEnv && <DevScreenButton onPress={this.navigateToMarkdown} />}
 
         <Content contentContainerStyle={styles.flex} noPadded={true}>
-          <HorizontalScroll cards={this.renderCardComponents()} />
+          <HorizontalScroll
+            cards={getLandingCards(this.props.isCieSupported)}
+          />
         </Content>
 
         <View footer={true}>
