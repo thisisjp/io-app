@@ -72,7 +72,7 @@ export const dsuData: Dsu = {
   max_tax_benefit: 30
 };
 
-export const mockedElegibilityCheck: EligibilityCheckSuccessEligible = {
+export const mockedEligibilityCheck: EligibilityCheckSuccessEligible = {
   id: "d296cf6a-11f8-412b-972a-ede34d629680" as NonEmptyString,
   valid_before: new Date("2020-07-04T12:20:00.000Z"),
   dsu_request: dsuData,
