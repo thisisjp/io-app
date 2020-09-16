@@ -3,15 +3,17 @@ import * as t from "io-ts";
 import { testSaga } from "redux-saga-test-plan";
 import {
   checkCurrentSession,
-  sessionExpired
+  sessionExpired,
+  sessionInformationLoadSuccess
 } from "../../../store/actions/authentication";
 import { checkSession, checkSessionResult } from "../watchCheckSessionSaga";
+import { PublicSession } from "../../../../definitions/backend/PublicSession";
 
 describe("checkSession", () => {
   const getSessionValidity = jest.fn();
 
   it("if response is 200 the session is valid", () => {
-    const responseOK = right({ status: 200 });
+    const responseOK = right({ status: 200, value: {} });
     testSaga(checkSession, getSessionValidity)
       .next()
       .call(getSessionValidity, {})
@@ -21,6 +23,8 @@ describe("checkSession", () => {
           isSessionValid: true
         })
       )
+      .next()
+      .put(sessionInformationLoadSuccess({} as PublicSession))
       .next()
       .isDone();
   });
